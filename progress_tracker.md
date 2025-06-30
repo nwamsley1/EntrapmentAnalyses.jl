@@ -47,30 +47,29 @@
 - Created separate functions for precursor and protein plots
 - Added vector-based plotting function for flexibility
 
+### 8. **Main API Functions** ✓
+- [x] Created `run_efdr_analysis()` for precursor-level analysis
+- [x] Created `run_protein_efdr_analysis()` for protein-level analysis
+- [x] Implemented notebook-compatible dictionary creation for pairing
+- [x] Added comprehensive output generation (TSV files, plots)
+- [x] Included proper error handling and validation
+
+### 9. **Testing Infrastructure** ✓
+- [x] Written unit tests for:
+  - [x] Pairing functions (vector and DataFrame interfaces)
+  - [x] EFDR calculations (combined and paired methods)
+  - [x] Q-value calculations and monotonization
+  - [x] Sort order validation
+- [x] Created integration tests with sample data
+- [x] Added error handling tests
+
 ## Remaining Objectives
-
-### 8. **Main API Functions** (HIGH PRIORITY)
-- [ ] Create `run_efdr_analysis()` for precursor-level analysis
-- [ ] Create `run_protein_efdr_analysis()` for protein-level analysis
-- [ ] Implement notebook-compatible dictionary creation for pairing
-- [ ] Add comprehensive output generation (TSV files, plots)
-- [ ] Include proper error handling and validation
-
-### 9. **Testing Infrastructure** (MEDIUM PRIORITY)
-- [ ] Write unit tests for:
-  - [ ] Pairing functions
-  - [ ] EFDR calculations
-  - [ ] Q-value calculations
-  - [ ] Protein rollup
-- [ ] Create integration tests with sample data
-- [ ] Test with multi-run data to verify per-run calculations
-- [ ] Validate output matches notebook implementation
 
 ### 10. **Documentation and Examples** (LOW PRIORITY)
 - [ ] Create usage examples
-- [ ] Write comprehensive docstrings for all public functions
 - [ ] Update CLAUDE.md with specific instructions for this module
-- [ ] Create sample data for testing
+- [ ] Create sample data files for testing
+- [ ] Run tests with real data to validate against notebook outputs
 
 ## Key Implementation Notes
 
