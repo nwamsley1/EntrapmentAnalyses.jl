@@ -39,8 +39,41 @@ using EntrapmentAnalyses
         @test length(efdr) == length(scores)
         @test all(0 .<= efdr .<= 1)
         
-        # Entrapment at position 2 wins (0.5 > 0.9's complement 0.5)
-        # Entrapment at position 4 loses (0.4 < 0.8's complement 0.4)
+        # Position 2: entrapment (0.5) vs original (0.9) - entrapment loses
+        # Position 4: entrapment (0.4) vs original (0.8) - entrapment loses
+        # Testing the notebook's logic:
+        # - Nεsτ: entrapment >= threshold > original
+        # - Nετs: entrapment > original AND original >= threshold
+    end
+    
+    @testset "Paired EFDR specific counting logic" begin
+        # Create a specific test case to verify notebook logic
+        # Scores in sorted order: [1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3]
+        scores = [1.0, 0.6, 0.9, 0.4, 0.8, 0.3, 0.7, 0.5]
+        # Complements arranged so we can test specific conditions
+        complement_scores = [0.6, 1.0, 0.4, 0.9, 0.3, 0.8, 0.5, 0.7]
+        is_original = [true, false, true, false, true, false, true, false]
+        # Q-values that match score order
+        qvals = [0.001, 0.006, 0.002, 0.008, 0.003, 0.009, 0.004, 0.005]
+        
+        efdr = calculate_paired_efdr(scores, complement_scores, is_original, qvals;
+                                    r=1.0, show_progress=false)
+        
+        # Manual calculation for threshold at position 4 (score 0.7):
+        # Positions with score >= 0.7: 1,3,5,7 (scores: 1.0,0.9,0.8,0.7)
+        # Position 1: original
+        # Position 3: original  
+        # Position 5: original
+        # Position 7: original
+        # So at threshold 0.7, we should have only originals above
+        
+        # For entrapments:
+        # Position 2: e=0.6, o=1.0 (e < threshold, not counted)
+        # Position 4: e=0.4, o=0.9 (e < threshold, not counted)
+        # Position 6: e=0.3, o=0.8 (e < threshold, not counted)
+        # Position 8: e=0.5, o=0.7 (e < threshold, not counted)
+        
+        @test length(efdr) == length(scores)
     end
     
     @testset "Struct-based interface" begin

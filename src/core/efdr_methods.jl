@@ -177,9 +177,9 @@ function calculate_paired_efdr(
         end
     end
     
-    if show_progress
-        finish!(pb)
-    end
+    #if show_progress
+    #    finish!(pb)
+    #end
     
     return efdr
 end

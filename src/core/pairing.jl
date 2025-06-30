@@ -28,7 +28,7 @@ function compute_pairing_vectors(
     lib_entrap_groups::AbstractVector{<:Integer},
     lib_pair_ids::AbstractVector{<:Integer},
     results_sequences::AbstractVector{String},
-    results_charges::AbstractVector{<:Integer};
+    results_charges::AbstractVector{<:Real};
     show_progress::Bool = true
 )
     n_results = length(results_sequences)

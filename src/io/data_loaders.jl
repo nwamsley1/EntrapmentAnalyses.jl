@@ -53,6 +53,32 @@ function load_parquet_results(filepaths::Vector{String})
     
     println("Loaded $(nrow(results_df)) total PSMs")
     
+    #Get rid of missing 
+    if any(ismissing.(results_df.stripped_seq))
+        @warn "Warning: Found missing stripped_seq values, replacing with empty string"
+    end
+    # Replace missing stripped_seq with empty string
+    results_df.stripped_seq = [coalesce(x, "") for x in results_df.stripped_seq]
+    if any(ismissing.(results_df.decoy))
+        @warn "Warning: Found missing decoy values, replacing with empty string"
+    end
+    results_df.decoy = [coalesce(x, false) for x in results_df.decoy]
+    if any(ismissing.(results_df.z))
+        @warn "Warning: Found missing decoy values, replacing with empty string"
+    end
+    results_df.z = [UInt8(coalesce(x, 0)) for x in results_df.z]
+
+    if any(ismissing.(results_df.PredVal))
+        @warn "Warning: Found missing decoy values, replacing with empty string"
+    end
+    results_df.PredVal = [Float32(coalesce(x, 0)) for x in results_df.PredVal]
+    
+    if any(ismissing.(results_df.file_name))
+        @warn "Warning: Found missing decoy values, replacing with empty string"
+    end
+    results_df.file_name = [coalesce(x, "") for x in results_df.file_name]
+
+    eltype(results_df.stripped_seq) == String || error("stripped_seq must be String type")
     return results_df
 end
 
@@ -70,6 +96,30 @@ Load spectral library from TSV file.
 # Returns
 - DataFrame with library information
 """
+
+"""
+    load_parquet(filepath::String)
+
+Load a single Parquet file containing PSM results.
+
+# Arguments
+- `filepath`: Path to the Parquet file
+
+# Returns
+- DataFrame with PSM results
+"""
+function load_parquet(filepath::String)
+    if !isfile(filepath)
+        error("File not found: $filepath")
+    end
+    
+    println("Loading Parquet file: $(basename(filepath))")
+    df = DataFrame(Dataset(filepath); copycols=true)
+    println("Loaded $(nrow(df)) PSMs")
+    
+    return df
+end
+
 function load_spectral_library(filepath::String)
     if !isfile(filepath)
         error("Library file not found: $filepath")
@@ -92,5 +142,11 @@ function load_spectral_library(filepath::String)
     
     println("Library loaded: $n_targets targets, $n_entrapments entrapments")
     
+    if any(ismissing.(library_df.PrecursorCharge))
+        @warn "Warning: Found missing decoy values, replacing with empty string"
+    end
+    library_df.PrecursorCharge = [UInt8(coalesce(x, 0)) for x in library_df.PrecursorCharge]
+    
+
     return library_df
 end

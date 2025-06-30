@@ -37,15 +37,15 @@ function calculate_qvalues(
     end
     
     # Create indices for sorting
-    indices = collect(1:n)
+    #indices = collect(1:n)
     
     # Sort by score (descending), targets before decoys
-    sort_order = sortperm(indices) do i
-        # Primary: score (descending)
-        # Secondary: target before decoy
-        (-scores[i], is_decoy[i])
-    end
-    
+    #sort_order = sortperm(indices) do i
+    #    # Primary: score (descending)
+    #    # Secondary: target before decoy
+    #    (-scores[i], is_decoy[i])
+    #end
+    sort_order = sortperm(collect(zip(scores, is_decoy)), by=x -> (-x[1], x[2]))
     # Validate sort order
     sorted_scores = scores[sort_order]
     if !validate_sort_order(sorted_scores, false)  # Should be descending
@@ -194,6 +194,60 @@ function calculate_global_qvalues!(
     Nd = sum(global_summary[!, :decoy])
     Nτ = nrow(global_summary) - Nd
     println("Global q-values: $(Nd) decoys, $(Nτ) targets")
+    
+    return nothing
+end
+
+"""
+    calculate_qvalues_per_file!(df::DataFrame; score_col=:PredVal, file_col=:file_name)
+
+Calculate q-values separately for each file in the dataframe.
+Adds :local_qvalue and :global_qvalue columns.
+
+# Arguments
+- `df`: DataFrame with PSM results
+- `score_col`: Score column name (default: :PredVal)
+- `file_col`: File identifier column (default: :file_name)
+"""
+function calculate_qvalues_per_file!(
+    df::DataFrame;
+    score_col::Symbol = :PredVal,
+    file_col::Symbol = :file_name
+)
+    println("Calculating q-values per file...")
+    
+    # Initialize columns
+    df[!, :local_qvalue] = zeros(Float32, nrow(df))
+    df[!, :global_qvalue] = zeros(Float32, nrow(df))
+    
+    # Group by file
+    if hasproperty(df, file_col)
+        gdf = groupby(df, file_col)
+        n_files = length(gdf)
+        println("Processing $n_files files...")
+        
+        for (i, (key, file_df)) in enumerate(pairs(gdf))
+            file_name = key[file_col]
+            println("  File $i/$n_files: $file_name")
+            
+            # Calculate local q-values for this file
+            calculate_qvalues!(file_df; score_col=score_col, sort_df=true)
+            
+            # Calculate global q-values for this file
+            calculate_global_qvalues!(file_df; score_col=score_col)
+            
+            # Print file summary
+            n_psms = nrow(file_df)
+            n_decoys = sum(file_df.decoy)
+            n_targets = n_psms - n_decoys
+            println("    PSMs: $n_psms (targets: $n_targets, decoys: $n_decoys)")
+        end
+    else
+        # Single file case
+        println("No file column found, treating as single file...")
+        calculate_qvalues!(df; score_col=score_col, sort_df=true)
+        calculate_global_qvalues!(df; score_col=score_col)
+    end
     
     return nothing
 end

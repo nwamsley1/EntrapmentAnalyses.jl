@@ -1,10 +1,52 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with the EntrapmentAnalyses.jl module.
 
 ## Project Overview
 
-This is a Julia package called "EntrapmentAnalyses" (v0.1.0) that appears to be in early development. The package is set up with the standard Julia package structure.
+EntrapmentAnalyses.jl is a Julia package for entrapment-based false discovery rate (FDR) analysis in proteomics data. It implements both combined and paired empirical FDR methods, supporting both precursor-level and protein-level analyses.
+
+**Key Features:**
+- Parquet and TSV data loading
+- Combined and paired EFDR calculations
+- Per-file q-value calculation
+- Protein-level rollup and analysis
+- Notebook-style visualization with specific color schemes
+- Progress monitoring for O(n²) operations
+
+## Important Implementation Details
+
+### 1. Critical Bug Fix in Paired EFDR
+The paired EFDR calculation was fixed to match the notebook's exact logic using mutually exclusive conditions:
+```julia
+# Correct implementation with elseif:
+if e_score >= s && s > o_score
+    Nεsτ += 1
+elseif e_score > o_score && o_score >= s
+    Nετs += 1
+end
+```
+
+### 2. Per-File Q-value Calculation
+**IMPORTANT**: Q-values must be calculated separately for each file, not on concatenated data:
+- Group by `file_name` first
+- Calculate q-values within each group
+- Use these per-file q-values for EFDR calculations
+
+### 3. Data Format Expectations
+**PSM Results (Parquet):**
+- `stripped_seq`: Peptide sequence (String)
+- `z`: Charge state (numeric)
+- `PredVal`: Prediction score (Float)
+- `decoy`: Decoy status (Bool)
+- `file_name`: Source file identifier (String)
+- `protein`: Protein identifiers (String)
+
+**Spectral Library (TSV):**
+- `PeptideSequence`: Modified peptide sequence (String)
+- `PrecursorCharge`: Charge state (Int)
+- `EntrapmentGroupId`: 0 for originals, >0 for entrapments (Int)
+- `PrecursorIdx`: Unique pair identifier (Int)
 
 ## Common Development Commands
 
@@ -19,14 +61,8 @@ julia
 # Install dependencies
 ] instantiate
 
-# Update dependencies
-] update
-
 # Add a new dependency
 ] add PackageName
-
-# Remove a dependency
-] rm PackageName
 ```
 
 ### Running Tests
@@ -34,11 +70,8 @@ julia
 # From Julia REPL with activated environment
 ] test
 
-# Or from command line
-julia --project=. -e 'using Pkg; Pkg.test()'
-
-# Run tests with coverage
-julia --project=. --code-coverage=user -e 'using Pkg; Pkg.test()'
+# Or run specific test files
+julia --project=. test/unit/test_efdr_methods.jl
 ```
 
 ### Development Workflow
@@ -47,31 +80,108 @@ julia --project=. --code-coverage=user -e 'using Pkg; Pkg.test()'
 julia --project=.
 
 # In the REPL
-using Revise
-using EntrapmentAnalyses
+using Revise, EntrapmentAnalyses
+
+# Load example data
+psm_df = load_parquet("path/to/psm_results.parquet")
+spec_lib_df = load_spectral_library("path/to/spectral_library.tsv")
+
+# Run analysis
+results = run_efdr_analysis([psm_file], library_file; output_dir="output")
 ```
+
+## Main API Functions
+
+### 1. `run_efdr_analysis`
+```julia
+run_efdr_analysis(parquet_files::Vector{String}, library_path::String; kwargs...)
+```
+- Runs precursor-level EFDR analysis
+- Calculates both combined and paired EFDR by default
+- Outputs TSV results and plots
+
+### 2. `run_protein_efdr_analysis`
+```julia
+run_protein_efdr_analysis(parquet_files::Vector{String}, library_path::String; kwargs...)
+```
+- Runs protein-level EFDR analysis
+- Performs protein rollup (best PSM per protein)
+- Calculates per-run protein q-values
 
 ## Code Architecture
 
-The package follows standard Julia package conventions:
+```
+src/
+├── EntrapmentAnalyses.jl      # Main module, exports
+├── io/
+│   └── data_loaders.jl        # Parquet/TSV loading
+├── core/
+│   ├── pairing.jl             # Efficient pairing vectors
+│   ├── efdr_methods.jl        # EFDR calculations (FIXED)
+│   └── scoring.jl             # Monotonization
+├── analysis/
+│   ├── qvalue_calculation.jl  # Q-value calculations
+│   ├── protein_analysis.jl    # Protein rollup
+│   └── efdr_analysis.jl       # Analysis coordination
+├── plotting/
+│   └── visualization.jl        # Notebook-style plots
+└── api.jl                     # Public API functions
+```
 
-- `src/EntrapmentAnalyses.jl`: Main module file that exports the public API
-- `test/runtests.jl`: Test suite entry point
-- `Project.toml`: Package metadata and dependencies
-- `Manifest.toml`: Locked dependency versions
+## Testing Guidelines
 
-## Important Notes
+### Key Test Areas
+1. **Paired EFDR Logic**: Test the fixed mutually exclusive conditions
+2. **Per-File Q-values**: Ensure q-values are calculated per file
+3. **Protein Rollup**: Verify best PSM selection per protein
+4. **Plot Styling**: Check exact RGB values and sizes
 
-1. **Test File Issue**: The test file (`test/runtests.jl`) currently references `MyPackage` instead of `EntrapmentAnalyses`. This needs to be fixed before tests can run properly.
+### Running Specific Tests
+```julia
+# Test the critical paired EFDR fix
+include("test/unit/test_paired_efdr_validation.jl")
 
-2. **Revise.jl Integration**: The package includes Revise as a dependency, which enables automatic code reloading during development. Always start Julia sessions with Revise loaded for a smoother development experience.
+# Test protein analysis
+include("test/unit/test_protein_analysis.jl")
+```
 
-3. **Package UUID**: The package has UUID `60062a3e-e55a-4920-8913-bf16cdadf465` which uniquely identifies it in the Julia ecosystem.
+## Common Issues and Solutions
 
-## Julia-Specific Conventions
+### Issue: "UndefVarError: load_parquet not defined"
+**Solution**: The function is exported, but Julia needs to be restarted after module changes.
 
-- Use `@test` macro for unit tests
-- Follow Julia naming conventions: modules use PascalCase, functions use snake_case
-- Export public API functions at the module level
-- Include docstrings using triple quotes before function definitions
-- Use type annotations for better performance and clarity when beneficial
+### Issue: Q-values not monotonic
+**Solution**: Ensure `monotonize!` is called after q-value calculation and operates on sorted data.
+
+### Issue: Missing complement pairs
+**Solution**: The pairing system handles unpaired sequences by setting complement_indices to -1.
+
+### Issue: Type instability warnings
+**Solution**: Use type assertions when accessing DataFrame columns:
+```julia
+scores = df[!, :PredVal]::Vector{Float32}
+```
+
+## Visualization Specifications
+
+**Exact Plot Styling (from notebook):**
+- Size: 600×450 pixels (`size = (400*1.5, 300*1.5)`)
+- Color: RGB(0.39215686, 0.58431373, 0.92941176)
+- Alpha: 0.75
+- Line width: 3
+- Font sizes: title=16, axis labels=16, ticks=12
+- Axis limits: (0, 0.05) for both x and y
+
+## Performance Considerations
+
+1. **Paired EFDR is O(n²)**: Progress bars show actual operation count
+2. **Pre-computed pairing**: Avoids dictionary lookups in main loops
+3. **Vector operations**: Use typed vectors instead of DataFrame columns in loops
+4. **Type stability**: Ensure all function arguments have known types
+
+## Future Improvements to Consider
+
+1. Parallelize per-file EFDR calculations
+2. Add streaming support for very large datasets
+3. Implement combined+paired plot overlays
+4. Add statistical summaries to output reports

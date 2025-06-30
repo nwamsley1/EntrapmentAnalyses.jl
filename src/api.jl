@@ -95,9 +95,8 @@ function run_efdr_analysis(
     entrapment_group = [seq ∈ entrap_seqs for seq in stripped_seqs]
     results_df[!, :entrapment_group] = entrapment_group
     
-    # Step 3: Calculate q-values
-    calculate_qvalues!(results_df; score_col=score_col)
-    calculate_global_qvalues!(results_df; score_col=score_col)
+    # Step 3: Calculate q-values per file
+    calculate_qvalues_per_file!(results_df; score_col=score_col, file_col=:file_name)
     
     # Step 4: Filter by global q-value (optional)
     if global_qval_threshold < 1.0
@@ -134,13 +133,13 @@ function run_efdr_analysis(
             run_indices = run_df._row_idx
             
             # Get complement scores for this run
-            scores = run_df[!, score_col]::Vector{Float32}
-            all_scores = results_no_decoys[!, score_col]::Vector{Float32}
+            scores = run_df[!, score_col]::AbstractVector{Float32}
+            all_scores = results_no_decoys[!, score_col]::AbstractVector{Float32}
             complement_scores_all = get_complement_scores(all_scores, pairing_info.complement_indices)
             complement_scores = complement_scores_all[run_indices]
             
             # Calculate paired EFDR
-            qvals = run_df.local_qvalue::Vector{Float32}
+            qvals = run_df.local_qvalue::AbstractVector{Float32}
             efdr_values = calculate_paired_efdr(
                 Float64.(scores),
                 Float64.(complement_scores),

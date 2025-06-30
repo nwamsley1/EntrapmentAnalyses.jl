@@ -6,6 +6,7 @@ using EntrapmentAnalyses
     include("unit/test_pairing.jl")
     include("unit/test_efdr_methods.jl") 
     include("unit/test_qvalue.jl")
+    include("unit/test_paired_efdr_validation.jl")
     
     # Integration tests
     include("integration/test_full_pipeline.jl")
