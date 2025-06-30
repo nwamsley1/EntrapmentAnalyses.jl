@@ -129,24 +129,14 @@ function run_efdr_analysis(
     pairing_info = compute_pairing_vectors(library_df, results_no_decoys; 
                                           show_progress=show_progress)
     
-    # Step 8: Calculate combined EFDR
-    println("\nCalculating combined EFDR...")
-    # Get entrapment labels from pairing info
-    entrap_labels = [orig ? 0 : 1 for orig in pairing_info.is_original]
-    combined_efdr = calculate_combined_efdr(
-        Float64.(results_no_decoys[!, score_col]),
-        entrap_labels,
-        Float64.(results_no_decoys.local_qvalue);
-        r = r_lib,
-        show_progress = show_progress
-    )
-    monotonize!(combined_efdr)
-    results_no_decoys[!, :combined_entrapment_fdr] = Float32.(combined_efdr)
-    
-    # Step 9: Initialize paired EFDR column
+    # Step 8: Initialize EFDR columns
+    results_no_decoys[!, :combined_entrapment_fdr] = zeros(Float32, nrow(results_no_decoys))
     results_no_decoys[!, :precursor_entrapment_fdr] = zeros(Float32, nrow(results_no_decoys))
     
-    # Step 10: Group by run and calculate paired EFDR
+    # Step 9: Get entrapment labels from pairing info
+    entrap_labels = [orig ? 0 : 1 for orig in pairing_info.is_original]
+    
+    # Step 10: Group by run and calculate both EFDR methods
     if hasproperty(results_no_decoys, :file_name)
         # Add row indices for tracking
         results_no_decoys[!, :_row_idx] = 1:nrow(results_no_decoys)
@@ -158,15 +148,35 @@ function run_efdr_analysis(
             # Get indices for this run in the original results_no_decoys
             run_indices = run_df._row_idx
             
-            # Get complement scores for this run
+            # Extract data for this run
             scores = run_df[!, score_col]::AbstractVector{Float32}
+            qvals = run_df.local_qvalue::AbstractVector{Float32}
+            run_entrap_labels = entrap_labels[run_indices]
+            
+            # Calculate combined EFDR for this run
+            combined_efdr_values = calculate_combined_efdr(
+                Float64.(scores),
+                run_entrap_labels,
+                Float64.(qvals);
+                r = r_lib,
+                show_progress = show_progress
+            )
+            monotonize!(combined_efdr_values)
+            
+            # Debug: Check combined EFDR
+            max_combined = maximum(combined_efdr_values)
+            println("  Max combined EFDR for this run: $max_combined")
+            
+            # Store combined EFDR results
+            results_no_decoys[run_indices, :combined_entrapment_fdr] = Float32.(combined_efdr_values)
+            
+            # Get complement scores for paired EFDR
             all_scores = results_no_decoys[!, score_col]::AbstractVector{Float32}
             complement_scores_all = get_complement_scores(all_scores, pairing_info.complement_indices)
             complement_scores = complement_scores_all[run_indices]
             
             # Calculate paired EFDR
-            qvals = run_df.local_qvalue::AbstractVector{Float32}
-            efdr_values = calculate_paired_efdr(
+            paired_efdr_values = calculate_paired_efdr(
                 Float64.(scores),
                 Float64.(complement_scores),
                 pairing_info.is_original[run_indices],
@@ -175,10 +185,14 @@ function run_efdr_analysis(
                 show_progress = show_progress
             )
             
-            monotonize!(efdr_values)
+            monotonize!(paired_efdr_values)
             
-            # Store results
-            run_df[!, :precursor_entrapment_fdr] = Float32.(efdr_values)
+            # Debug: Check paired EFDR
+            max_paired = maximum(paired_efdr_values)
+            println("  Max paired EFDR for this run: $max_paired")
+            
+            # Store paired EFDR results
+            results_no_decoys[run_indices, :precursor_entrapment_fdr] = Float32.(paired_efdr_values)
         end
         
         # Remove temporary column
@@ -188,10 +202,22 @@ function run_efdr_analysis(
         println("Processing single file...")
         
         scores = results_no_decoys[!, score_col]::Vector{Float32}
-        complement_scores = get_complement_scores(scores, pairing_info.complement_indices)
         qvals = results_no_decoys.local_qvalue::Vector{Float32}
         
-        efdr_values = calculate_paired_efdr(
+        # Calculate combined EFDR
+        combined_efdr_values = calculate_combined_efdr(
+            Float64.(scores),
+            entrap_labels,
+            Float64.(qvals);
+            r = r_lib,
+            show_progress = show_progress
+        )
+        monotonize!(combined_efdr_values)
+        results_no_decoys[!, :combined_entrapment_fdr] = Float32.(combined_efdr_values)
+        
+        # Calculate paired EFDR
+        complement_scores = get_complement_scores(scores, pairing_info.complement_indices)
+        paired_efdr_values = calculate_paired_efdr(
             Float64.(scores),
             Float64.(complement_scores),
             pairing_info.is_original,
@@ -200,8 +226,8 @@ function run_efdr_analysis(
             show_progress = show_progress
         )
         
-        monotonize!(efdr_values)
-        results_no_decoys[!, :precursor_entrapment_fdr] = Float32.(efdr_values)
+        monotonize!(paired_efdr_values)
+        results_no_decoys[!, :precursor_entrapment_fdr] = Float32.(paired_efdr_values)
     end
     
     # Step 11: Generate outputs
