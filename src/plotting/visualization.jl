@@ -14,8 +14,8 @@ function plot_precursor_efdr_comparison(
     xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
-    fdr_values = df[!, fdr_col]::Vector{Float32}
-    efdr_values = df[!, efdr_col]::Vector{Float32}
+    fdr_values = df[!, fdr_col]::AbstractVector{Float32}
+    efdr_values = df[!, efdr_col]::AbstractVector{Float32}
     
     # Determine y-axis range from data
     mask = fdr_values .<= xlim[2]
@@ -50,7 +50,7 @@ function plot_precursor_efdr_comparison(
     
     # Plot each run with notebook's exact color
     if hasproperty(df, :file_name)
-        file_names = df.file_name::Vector{String}
+        file_names = df.file_name::AbstractVector{String}
         for (key, group) in pairs(groupby(DataFrame(fdr=fdr_values, efdr=efdr_values, file=file_names), :file))
             plot!(p,
                   group.fdr,
@@ -93,8 +93,8 @@ function plot_protein_efdr_comparison(
     xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
-    fdr_values = df[!, fdr_col]::Vector{Float32}
-    efdr_values = df[!, efdr_col]::Vector{Float32}
+    fdr_values = df[!, fdr_col]::AbstractVector{Float32}
+    efdr_values = df[!, efdr_col]::AbstractVector{Float32}
     
     # Determine y-axis range from data
     mask = fdr_values .<= xlim[2]
@@ -129,7 +129,7 @@ function plot_protein_efdr_comparison(
     
     # Plot each run
     if hasproperty(df, :file_name)
-        file_names = df.file_name::Vector{String}
+        file_names = df.file_name::AbstractVector{String}
         for (key, group) in pairs(groupby(DataFrame(fdr=fdr_values, efdr=efdr_values, file=file_names), :file))
             plot!(p,
                   group.fdr,
@@ -223,8 +223,8 @@ function plot_combined_efdr(
     xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
-    fdr_values = df[!, fdr_col]::Vector{Float32}
-    efdr_values = df[!, efdr_col]::Vector{Float32}
+    fdr_values = df[!, fdr_col]::AbstractVector{Float32}
+    efdr_values = df[!, efdr_col]::AbstractVector{Float32}
     
     # Determine y-axis range from data
     mask = fdr_values .<= xlim[2]
@@ -259,7 +259,7 @@ function plot_combined_efdr(
     
     # Plot data
     if hasproperty(df, :file_name)
-        file_names = df.file_name::Vector{String}
+        file_names = df.file_name::AbstractVector{String}
         for (key, group) in pairs(groupby(DataFrame(fdr=fdr_values, efdr=efdr_values, file=file_names), :file))
             plot!(p,
                   group.fdr,
@@ -308,8 +308,8 @@ function plot_paired_efdr(
     xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
-    fdr_values = df[!, fdr_col]::Vector{Float32}
-    efdr_values = df[!, efdr_col]::Vector{Float32}
+    fdr_values = df[!, fdr_col]::AbstractVector{Float32}
+    efdr_values = df[!, efdr_col]::AbstractVector{Float32}
     
     # Determine y-axis range from data
     mask = fdr_values .<= xlim[2]
@@ -344,7 +344,7 @@ function plot_paired_efdr(
     
     # Plot data
     if hasproperty(df, :file_name)
-        file_names = df.file_name::Vector{String}
+        file_names = df.file_name::AbstractVector{String}
         for (key, group) in pairs(groupby(DataFrame(fdr=fdr_values, efdr=efdr_values, file=file_names), :file))
             plot!(p,
                   group.fdr,
@@ -395,9 +395,9 @@ function plot_efdr_comparison_both_methods(
     xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
-    fdr_values = df[!, fdr_col]::Vector{Float32}
-    combined_efdr = df[!, combined_efdr_col]::Vector{Float32}
-    paired_efdr = df[!, paired_efdr_col]::Vector{Float32}
+    fdr_values = df[!, fdr_col]::AbstractVector{Float32}
+    combined_efdr = df[!, combined_efdr_col]::AbstractVector{Float32}
+    paired_efdr = df[!, paired_efdr_col]::AbstractVector{Float32}
     
     # Determine y-axis range from data
     mask = fdr_values .<= xlim[2]
@@ -433,7 +433,7 @@ function plot_efdr_comparison_both_methods(
     
     # Plot both methods
     if hasproperty(df, :file_name)
-        file_names = df.file_name::Vector{String}
+        file_names = df.file_name::AbstractVector{String}
         
         # Combined method
         for (i, (key, group)) in enumerate(pairs(groupby(DataFrame(fdr=fdr_values, efdr=combined_efdr, file=file_names), :file)))

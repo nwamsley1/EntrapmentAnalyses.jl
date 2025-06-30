@@ -42,8 +42,8 @@ function run_efdr_analysis(
     target_seqs = Set{String}()
     entrap_seqs = Set{String}()
     
-    entrap_groups = library_df.EntrapmentGroupId::Vector{Int}
-    peptide_seqs = library_df.PeptideSequence::Vector{String}
+    entrap_groups = library_df.EntrapmentGroupId::AbstractVector{Int}
+    peptide_seqs = library_df.PeptideSequence::AbstractVector{String}
     
     for i in eachindex(entrap_groups)
         if entrap_groups[i] == 0
@@ -54,7 +54,7 @@ function run_efdr_analysis(
     end
     
     # Type-stable column addition
-    stripped_seqs = results_df.stripped_seq::Vector{String}
+    stripped_seqs = results_df.stripped_seq::AbstractVector{String}
     entrapment_group = [seq ∈ entrap_seqs for seq in stripped_seqs]
     results_df[!, :entrapment_group] = entrapment_group
     
@@ -64,7 +64,7 @@ function run_efdr_analysis(
     # Step 4: Filter by global q-value (optional)
     if global_qval_threshold < 1.0
         n_before = nrow(results_df)
-        global_qvals = results_df.global_qvalue::Vector{Float32}
+        global_qvals = results_df.global_qvalue::AbstractVector{Float32}
         keep_mask = global_qvals .<= global_qval_threshold
         results_df = results_df[keep_mask, :]
         n_after = nrow(results_df)
@@ -74,7 +74,7 @@ function run_efdr_analysis(
     # Step 5: Filter by local q-value to reduce computation time
     if local_qval_threshold < 1.0
         n_before = nrow(results_df)
-        local_qvals = results_df.local_qvalue::Vector{Float32}
+        local_qvals = results_df.local_qvalue::AbstractVector{Float32}
         keep_mask = local_qvals .<= local_qval_threshold
         results_df = results_df[keep_mask, :]
         n_after = nrow(results_df)
@@ -82,7 +82,7 @@ function run_efdr_analysis(
     end
     
     # Step 6: Remove decoys for EFDR calculation
-    decoy_mask = results_df.decoy::Vector{Bool}
+    decoy_mask = results_df.decoy::AbstractVector{Bool}
     results_no_decoys = results_df[.!decoy_mask, :]
     println("Analyzing $(nrow(results_no_decoys)) target PSMs")
     
@@ -162,8 +162,8 @@ function run_efdr_analysis(
         # Single file case
         println("Processing single file...")
         
-        scores = results_no_decoys[!, score_col]::Vector{Float32}
-        qvals = results_no_decoys.local_qvalue::Vector{Float32}
+        scores = results_no_decoys[!, score_col]::AbstractVector{Float32}
+        qvals = results_no_decoys.local_qvalue::AbstractVector{Float32}
         
         # Calculate combined EFDR
         combined_efdr_values = calculate_combined_efdr(
@@ -262,8 +262,8 @@ function run_protein_efdr_analysis(
     target_seqs = Set{String}()
     entrap_seqs = Set{String}()
     
-    entrap_groups = library_df.EntrapmentGroupId::Vector{Int}
-    peptide_seqs = library_df.PeptideSequence::Vector{String}
+    entrap_groups = library_df.EntrapmentGroupId::AbstractVector{Int}
+    peptide_seqs = library_df.PeptideSequence::AbstractVector{String}
     
     for i in eachindex(entrap_groups)
         if entrap_groups[i] == 0
@@ -274,7 +274,7 @@ function run_protein_efdr_analysis(
     end
     
     # Type-stable column addition
-    stripped_seqs = results_df.stripped_seq::Vector{String}
+    stripped_seqs = results_df.stripped_seq::AbstractVector{String}
     entrapment_group = [seq ∈ entrap_seqs for seq in stripped_seqs]
     results_df[!, :entrapment_group] = entrapment_group
     
@@ -284,7 +284,7 @@ function run_protein_efdr_analysis(
     # Step 4: Filter by global q-value (optional)
     if global_qval_threshold < 1.0
         n_before = nrow(results_df)
-        global_qvals = results_df.global_qvalue::Vector{Float32}
+        global_qvals = results_df.global_qvalue::AbstractVector{Float32}
         keep_mask = global_qvals .<= global_qval_threshold
         results_df = results_df[keep_mask, :]
         n_after = nrow(results_df)
@@ -294,7 +294,7 @@ function run_protein_efdr_analysis(
     # Step 5: Filter by local q-value to reduce computation time
     if local_qval_threshold < 1.0
         n_before = nrow(results_df)
-        local_qvals = results_df.local_qvalue::Vector{Float32}
+        local_qvals = results_df.local_qvalue::AbstractVector{Float32}
         keep_mask = local_qvals .<= local_qval_threshold
         results_df = results_df[keep_mask, :]
         n_after = nrow(results_df)
@@ -305,7 +305,7 @@ function run_protein_efdr_analysis(
     protein_df = prepare_protein_analysis(results_df, library_df; score_col=score_col)
     
     # Step 7: Remove decoys for EFDR calculation
-    decoy_mask = protein_df.decoy::Vector{Bool}
+    decoy_mask = protein_df.decoy::AbstractVector{Bool}
     protein_no_decoys = protein_df[.!decoy_mask, :]
     println("Analyzing $(nrow(protein_no_decoys)) target protein groups")
     
@@ -385,8 +385,8 @@ function run_protein_efdr_analysis(
         # Single file case
         println("Processing single protein file...")
         
-        scores = protein_no_decoys[!, score_col]::Vector{Float32}
-        qvals = protein_no_decoys.Protein_Qvalue::Vector{Float32}
+        scores = protein_no_decoys[!, score_col]::AbstractVector{Float32}
+        qvals = protein_no_decoys.Protein_Qvalue::AbstractVector{Float32}
         
         # Calculate combined EFDR
         combined_efdr_values = calculate_combined_efdr(

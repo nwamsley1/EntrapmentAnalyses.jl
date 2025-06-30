@@ -11,7 +11,7 @@ function add_entrapment_group_column!(
     entrap_seqs::Set{String}
 )
     # Type-stable vector operation
-    stripped_seqs = results_df.stripped_seq::Vector{String}
+    stripped_seqs = results_df.stripped_seq::AbstractVector{String}
     entrapment_group = Vector{Bool}(undef, length(stripped_seqs))
     
     for i in eachindex(stripped_seqs)
@@ -32,7 +32,7 @@ function calculate_protein_qvalues_per_run!(protein_df::DataFrame)
     
     for (run, results) in pairs(groupby(protein_df, :file_name))
         # Extract typed vectors
-        decoy_vec = results.decoy::Vector{Bool}
+        decoy_vec = results.decoy::AbstractVector{Bool}
         n = length(decoy_vec)
         qvals = zeros(Float32, n)
         
@@ -70,8 +70,8 @@ function prepare_protein_analysis(
     println("Preparing protein-level analysis...")
     
     # Step 1: Create target/entrapment sets from library
-    entrap_groups = library_df.EntrapmentGroupId::Vector{Int}
-    peptide_seqs = library_df.PeptideSequence::Vector{String}
+    entrap_groups = library_df.EntrapmentGroupId::AbstractVector{Int}
+    peptide_seqs = library_df.PeptideSequence::AbstractVector{String}
     
     target_seqs = Set{String}()
     entrap_seqs = Set{String}()
@@ -91,7 +91,7 @@ function prepare_protein_analysis(
     sort!(results_df, [score_col, :decoy], rev=[true, false])
     
     # Validate sort
-    score_vec = results_df[!, score_col]::Vector{Float32}
+    score_vec = results_df[!, score_col]::AbstractVector{Float32}
     if !issorted(score_vec, rev=true)
         @warn "Results may not be properly sorted by score"
     end
@@ -100,7 +100,7 @@ function prepare_protein_analysis(
     gresults_df = groupby(results_df, [:file_name, :channel, :decoy, :entrapment_group, :protein])
     
     protein_df = combine(gresults_df) do group
-        score_vec = group[!, score_col]::Vector{Float32}
+        score_vec = group[!, score_col]::AbstractVector{Float32}
         idx = argmax(score_vec)
         return group[idx:idx, :]
     end
@@ -187,12 +187,12 @@ DataFrame wrapper for protein rollup.
 """
 function rollup_to_protein_groups(df::DataFrame; score_col::Symbol = :PredVal)
     # Extract typed vectors
-    scores = df[!, score_col]::Vector{Float32}
-    proteins = df.protein::Vector{String}
-    file_names = df.file_name::Vector{String}
-    channels = df.channel::Vector{UInt8}
-    is_decoy = df.decoy::Vector{Bool}
-    is_entrapment = df.entrapment_group::Vector{Bool}
+    scores = df[!, score_col]::AbstractVector{Float32}
+    proteins = df.protein::AbstractVector{String}
+    file_names = df.file_name::AbstractVector{String}
+    channels = df.channel::AbstractVector{UInt8}
+    is_decoy = df.decoy::AbstractVector{Bool}
+    is_entrapment = df.entrapment_group::AbstractVector{Bool}
     
     return rollup_to_protein_groups(
         scores, proteins, file_names, Int.(channels), is_decoy, is_entrapment
