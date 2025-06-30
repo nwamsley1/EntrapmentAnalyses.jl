@@ -66,7 +66,7 @@ function run_efdr_analysis(
     output_dir::String = "efdr_output",
     score_col::Symbol = :PredVal,
     global_qval_threshold::Float64 = 1.0,
-    local_qval_threshold::Float64 = 0.05,
+    local_qval_threshold::Float64 = 0.01,
     r_lib::Float64 = 1.0,
     show_progress::Bool = true
 )
@@ -129,10 +129,24 @@ function run_efdr_analysis(
     pairing_info = compute_pairing_vectors(library_df, results_no_decoys; 
                                           show_progress=show_progress)
     
-    # Step 8: Initialize EFDR column
+    # Step 8: Calculate combined EFDR
+    println("\nCalculating combined EFDR...")
+    # Get entrapment labels from pairing info
+    entrap_labels = [orig ? 0 : 1 for orig in pairing_info.is_original]
+    combined_efdr = calculate_combined_efdr(
+        Float64.(results_no_decoys[!, score_col]),
+        entrap_labels,
+        Float64.(results_no_decoys.local_qvalue);
+        r = r_lib,
+        show_progress = show_progress
+    )
+    monotonize!(combined_efdr)
+    results_no_decoys[!, :combined_entrapment_fdr] = Float32.(combined_efdr)
+    
+    # Step 9: Initialize paired EFDR column
     results_no_decoys[!, :precursor_entrapment_fdr] = zeros(Float32, nrow(results_no_decoys))
     
-    # Step 9: Group by run and calculate EFDR
+    # Step 10: Group by run and calculate paired EFDR
     if hasproperty(results_no_decoys, :file_name)
         # Add row indices for tracking
         results_no_decoys[!, :_row_idx] = 1:nrow(results_no_decoys)
@@ -190,18 +204,30 @@ function run_efdr_analysis(
         results_no_decoys[!, :precursor_entrapment_fdr] = Float32.(efdr_values)
     end
     
-    # Step 10: Generate outputs
+    # Step 11: Generate outputs
     output_file = joinpath(output_dir, "precursor_entrapment_results.tsv")
     CSV.write(output_file, results_no_decoys, delim='\t')
     println("\nResults saved to: $output_file")
     
-    # Step 11: Create visualization
+    # Step 12: Create visualizations and report
     # Set x-axis limit to minimum of the two thresholds
     xlim_max = min(local_qval_threshold, global_qval_threshold)
+    
+    # Generate paired EFDR plot (for backward compatibility)
     plot_precursor_efdr_comparison(
         results_no_decoys;
         output_path = joinpath(output_dir, "precursor_efdr_comparison.pdf"),
         title = "Entrapment Analysis Precursors",
+        xlim = (0, xlim_max)
+    )
+    
+    # Generate comprehensive report with all plots
+    generate_analysis_report(
+        results_no_decoys,
+        output_dir;
+        combined_efdr_col = :combined_entrapment_fdr,
+        paired_efdr_col = :precursor_entrapment_fdr,
+        fdr_col = :local_qvalue,
         xlim = (0, xlim_max)
     )
     

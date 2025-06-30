@@ -498,7 +498,8 @@ function generate_analysis_report(
     paired_df::Union{DataFrame, Nothing} = nothing,
     combined_efdr_col::Symbol = :combined_entrapment_fdr,
     paired_efdr_col::Symbol = :paired_entrapment_fdr,
-    fdr_col::Symbol = :local_qvalue
+    fdr_col::Symbol = :local_qvalue,
+    xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Ensure output directory exists
     mkpath(output_dir)
@@ -513,20 +514,23 @@ function generate_analysis_report(
     if has_combined
         plot_combined_efdr(df; 
             output_path = joinpath(output_dir, "combined_efdr.pdf"),
-            efdr_col = combined_efdr_col)
+            efdr_col = combined_efdr_col,
+            xlim = xlim)
     end
     
     if has_paired
         plot_paired_efdr(df; 
             output_path = joinpath(output_dir, "paired_efdr.pdf"),
-            efdr_col = paired_efdr_col)
+            efdr_col = paired_efdr_col,
+            xlim = xlim)
     end
     
     if has_combined && has_paired
         plot_efdr_comparison_both_methods(df; 
             output_path = joinpath(output_dir, "comparison_both_methods.pdf"),
             combined_efdr_col = combined_efdr_col,
-            paired_efdr_col = paired_efdr_col)
+            paired_efdr_col = paired_efdr_col,
+            xlim = xlim)
     end
     
     # Generate report
