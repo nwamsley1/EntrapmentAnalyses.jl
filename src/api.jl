@@ -196,10 +196,13 @@ function run_efdr_analysis(
     println("\nResults saved to: $output_file")
     
     # Step 11: Create visualization
+    # Set x-axis limit to minimum of the two thresholds
+    xlim_max = min(local_qval_threshold, global_qval_threshold)
     plot_precursor_efdr_comparison(
         results_no_decoys;
         output_path = joinpath(output_dir, "precursor_efdr_comparison.pdf"),
-        title = "Entrapment Analysis Precursors"
+        title = "Entrapment Analysis Precursors",
+        xlim = (0, xlim_max)
     )
     
     return results_no_decoys

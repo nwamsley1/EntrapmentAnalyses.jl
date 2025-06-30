@@ -10,17 +10,27 @@ function plot_precursor_efdr_comparison(
     output_path::String = "precursor_efdr_comparison.pdf",
     fdr_col::Symbol = :local_qvalue,
     efdr_col::Symbol = :precursor_entrapment_fdr,
-    title::String = "Entrapment Analysis Precursors"
+    title::String = "Entrapment Analysis Precursors",
+    xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
     fdr_values = df[!, fdr_col]::Vector{Float32}
     efdr_values = df[!, efdr_col]::Vector{Float32}
     
-    # Exact plot styling from notebook
+    # Determine y-axis range from data
+    mask = fdr_values .<= xlim[2]
+    if any(mask)
+        max_efdr = maximum(efdr_values[mask])
+        ylim_max = max(max_efdr * 1.1, xlim[2])  # Add 10% padding or at least match x-axis
+    else
+        ylim_max = xlim[2]
+    end
+    
+    # Plot styling from notebook with dynamic limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = (0, 0.05),
-        ylim = (0, 0.05),
+        xlim = xlim,
+        ylim = (0, ylim_max),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -32,7 +42,7 @@ function plot_precursor_efdr_comparison(
     )
     
     # Diagonal reference line (exact style)
-    plot!(p, [0, 0.05], [0, 0.05], 
+    plot!(p, [0, xlim[2]], [0, xlim[2]], 
           color = :black, 
           lw = 3, 
           label = nothing, 
@@ -77,24 +87,34 @@ function plot_protein_efdr_comparison(
     output_path::String = "protein_efdr_comparison.pdf",
     fdr_col::Symbol = :Protein_Qvalue,
     efdr_col::Symbol = :protein_group_entrapment_fdr,
-    title::String = "Entrapment Analysis Protein Groups"
+    title::String = "Entrapment Analysis Protein Groups",
+    xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
     fdr_values = df[!, fdr_col]::Vector{Float32}
     efdr_values = df[!, efdr_col]::Vector{Float32}
     
-    # Exact plot styling from notebook
+    # Determine y-axis range from data
+    mask = fdr_values .<= xlim[2]
+    if any(mask)
+        max_efdr = maximum(efdr_values[mask])
+        ylim_max = max(max_efdr * 1.1, xlim[2])  # Add 10% padding or at least match x-axis
+    else
+        ylim_max = xlim[2]
+    end
+    
+    # Plot styling with dynamic limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = (0, 0.05),
-        ylim = (0, 0.05),
+        xlim = xlim,
+        ylim = (0, ylim_max),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title
     )
     
     # Note: titlefontsize and other font sizes are set after the diagonal line in notebook
-    plot!(p, [0, 0.05], [0, 0.05], 
+    plot!(p, [0, xlim[2]], [0, xlim[2]], 
           color = :black, 
           lw = 3, 
           label = nothing, 
@@ -197,17 +217,27 @@ function plot_combined_efdr(
     output_path::String = "combined_efdr.pdf",
     fdr_col::Symbol = :local_qvalue,
     efdr_col::Symbol = :combined_entrapment_fdr,
-    title::String = "Combined EFDR Method"
+    title::String = "Combined EFDR Method",
+    xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
     fdr_values = df[!, fdr_col]::Vector{Float32}
     efdr_values = df[!, efdr_col]::Vector{Float32}
     
+    # Determine y-axis range from data
+    mask = fdr_values .<= xlim[2]
+    if any(mask)
+        max_efdr = maximum(efdr_values[mask])
+        ylim_max = max(max_efdr * 1.1, xlim[2])
+    else
+        ylim_max = xlim[2]
+    end
+    
     # Create plot with notebook styling
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = (0, 0.05),
-        ylim = (0, 0.05),
+        xlim = xlim,
+        ylim = (0, ylim_max),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -219,7 +249,7 @@ function plot_combined_efdr(
     )
     
     # Diagonal reference line
-    plot!(p, [0, 0.05], [0, 0.05], 
+    plot!(p, [0, xlim[2]], [0, xlim[2]], 
           color = :black, 
           lw = 3, 
           label = nothing, 
@@ -272,17 +302,27 @@ function plot_paired_efdr(
     output_path::String = "paired_efdr.pdf",
     fdr_col::Symbol = :local_qvalue,
     efdr_col::Symbol = :paired_entrapment_fdr,
-    title::String = "Paired EFDR Method"
+    title::String = "Paired EFDR Method",
+    xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
     fdr_values = df[!, fdr_col]::Vector{Float32}
     efdr_values = df[!, efdr_col]::Vector{Float32}
     
+    # Determine y-axis range from data
+    mask = fdr_values .<= xlim[2]
+    if any(mask)
+        max_efdr = maximum(efdr_values[mask])
+        ylim_max = max(max_efdr * 1.1, xlim[2])
+    else
+        ylim_max = xlim[2]
+    end
+    
     # Create plot with notebook styling
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = (0, 0.05),
-        ylim = (0, 0.05),
+        xlim = xlim,
+        ylim = (0, ylim_max),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -294,7 +334,7 @@ function plot_paired_efdr(
     )
     
     # Diagonal reference line
-    plot!(p, [0, 0.05], [0, 0.05], 
+    plot!(p, [0, xlim[2]], [0, xlim[2]], 
           color = :black, 
           lw = 3, 
           label = nothing, 
@@ -349,18 +389,28 @@ function plot_efdr_comparison_both_methods(
     fdr_col::Symbol = :local_qvalue,
     combined_efdr_col::Symbol = :combined_entrapment_fdr,
     paired_efdr_col::Symbol = :paired_entrapment_fdr,
-    title::String = "EFDR Methods Comparison"
+    title::String = "EFDR Methods Comparison",
+    xlim::Tuple{Real, Real} = (0, 0.05)
 )
     # Extract typed vectors
     fdr_values = df[!, fdr_col]::Vector{Float32}
     combined_efdr = df[!, combined_efdr_col]::Vector{Float32}
     paired_efdr = df[!, paired_efdr_col]::Vector{Float32}
     
+    # Determine y-axis range from data
+    mask = fdr_values .<= xlim[2]
+    if any(mask)
+        max_efdr = max(maximum(combined_efdr[mask]), maximum(paired_efdr[mask]))
+        ylim_max = max(max_efdr * 1.1, xlim[2])
+    else
+        ylim_max = xlim[2]
+    end
+    
     # Create plot with notebook styling
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = (0, 0.05),
-        ylim = (0, 0.05),
+        xlim = xlim,
+        ylim = (0, ylim_max),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -373,7 +423,7 @@ function plot_efdr_comparison_both_methods(
     )
     
     # Diagonal reference line
-    plot!(p, [0, 0.05], [0, 0.05], 
+    plot!(p, [0, xlim[2]], [0, xlim[2]], 
           color = :black, 
           lw = 3, 
           label = "y = x", 
