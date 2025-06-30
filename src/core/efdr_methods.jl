@@ -152,17 +152,16 @@ function calculate_paired_efdr(
                 Nτ += 1
             else
                 Nε += 1
+                e_score = scores[idx]
+                o_score = complement_scores[idx]
                 
-                if score_rels[idx] == :entrap_wins
-                    o_score = complement_scores[idx]
-                    if o_score >= s
-                        Nετs += 1
-                    end
-                elseif score_rels[idx] != :unpaired && scores[idx] >= s
-                    o_score = complement_scores[idx]
-                    if o_score < s
-                        Nεsτ += 1
-                    end
+                # Following notebook logic exactly with elseif:
+                # N_est: (entrapment_score >= s) & (s > original_score)
+                if e_score >= s && s > o_score
+                    Nεsτ += 1
+                # N_ets: (entrapment_score > original_score) & (original_score >= s)
+                elseif e_score > o_score && o_score >= s
+                    Nετs += 1
                 end
             end
             
