@@ -179,6 +179,33 @@ scores = df[!, :PredVal]::Vector{Float32}
 3. **Vector operations**: Use typed vectors instead of DataFrame columns in loops
 4. **Type stability**: Ensure all function arguments have known types
 
+## Recent Changes
+
+### Q-value Calculation Fix
+- Changed from calculating q-values on concatenated data to per-file calculation
+- Added `calculate_qvalues_per_file!` function in `qvalue_calculation.jl`
+- Fixed MethodError by changing function signatures to accept `AbstractDataFrame`
+
+### Performance Enhancement
+- Added local q-value filtering (default 0.05) to reduce computation time
+- Added `local_qval_threshold` parameter to `run_efdr_analysis`
+
+### Visualization Updates
+- X-axis limited to `min(local_qval_threshold, global_qval_threshold)`
+- Y-axis dynamically scaled based on data
+- Updated all plotting functions to accept `xlim` parameter
+
+### EFDR Calculation Fixes
+- Fixed paired EFDR assignment issue - now assigns directly to parent DataFrame indices
+- Fixed combined EFDR to be calculated per-run instead of globally
+- Both combined and paired EFDR are now calculated inside the same per-file loop
+- Added debug output for both EFDR methods showing max values per run
+
+### Report Generation
+- Added comprehensive markdown report generation with `generate_analysis_report`
+- Generates separate plots for combined EFDR, paired EFDR, and comparison
+- Saves plots as both PDF and PNG for markdown embedding
+
 ## Future Improvements to Consider
 
 1. Parallelize per-file EFDR calculations

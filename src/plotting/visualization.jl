@@ -81,12 +81,14 @@ end
     plot_protein_efdr_comparison(df::DataFrame; kwargs...)
 
 Create EFDR comparison plot for protein groups using exact notebook styling.
+Supports both combined and paired EFDR columns.
 """
 function plot_protein_efdr_comparison(
     df::DataFrame;
     output_path::String = "protein_efdr_comparison.pdf",
     fdr_col::Symbol = :Protein_Qvalue,
     efdr_col::Symbol = :protein_group_entrapment_fdr,
+    combined_efdr_col::Union{Symbol, Nothing} = :combined_protein_fdr,
     title::String = "Entrapment Analysis Protein Groups",
     xlim::Tuple{Real, Real} = (0, 0.05)
 )
