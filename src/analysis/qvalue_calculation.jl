@@ -91,7 +91,7 @@ function calculate_qvalues(
 end
 
 """
-    calculate_qvalues!(df::DataFrame; score_col=:PredVal, decoy_col=:decoy, sort_df=true)
+    calculate_qvalues!(df::AbstractDataFrame; score_col=:PredVal, decoy_col=:decoy, sort_df=true)
 
 Calculate local q-values and add to DataFrame.
 
@@ -102,7 +102,7 @@ Calculate local q-values and add to DataFrame.
 - `sort_df`: Whether to sort the DataFrame (default: true)
 """
 function calculate_qvalues!(
-    df::DataFrame;
+    df::AbstractDataFrame;
     score_col::Symbol = :PredVal,
     decoy_col::Symbol = :decoy,
     sort_df::Bool = true
@@ -145,13 +145,13 @@ function calculate_qvalues!(
 end
 
 """
-    calculate_global_qvalues!(df::DataFrame; score_col=:PredVal)
+    calculate_global_qvalues!(df::AbstractDataFrame; score_col=:PredVal)
 
 Calculate global q-values (best per precursor).
 Adds :global_qvalue column to the dataframe.
 """
 function calculate_global_qvalues!(
-    df::DataFrame;
+    df::AbstractDataFrame;
     score_col::Symbol = :PredVal
 )
     println("Calculating global q-values...")
@@ -199,7 +199,7 @@ function calculate_global_qvalues!(
 end
 
 """
-    calculate_qvalues_per_file!(df::DataFrame; score_col=:PredVal, file_col=:file_name)
+    calculate_qvalues_per_file!(df::AbstractDataFrame; score_col=:PredVal, file_col=:file_name)
 
 Calculate q-values separately for each file in the dataframe.
 Adds :local_qvalue and :global_qvalue columns.
@@ -210,7 +210,7 @@ Adds :local_qvalue and :global_qvalue columns.
 - `file_col`: File identifier column (default: :file_name)
 """
 function calculate_qvalues_per_file!(
-    df::DataFrame;
+    df::AbstractDataFrame;
     score_col::Symbol = :PredVal,
     file_col::Symbol = :file_name
 )
