@@ -52,7 +52,8 @@ Run empirical FDR analysis at the precursor level.
 # Keyword Arguments
 - `output_dir`: Output directory (default: "efdr_output")
 - `score_col`: Score column name (default: :PredVal)
-- `global_qval_threshold`: Filter threshold (default: 0.01)
+- `global_qval_threshold`: Global q-value filter threshold (default: 1.0 = no filter)
+- `local_qval_threshold`: Local q-value filter threshold (default: 0.05)
 - `r_lib`: Library to real entrapment ratio (default: 1.0)
 - `show_progress`: Show progress bars (default: true)
 
@@ -64,7 +65,8 @@ function run_efdr_analysis(
     library_path::String;
     output_dir::String = "efdr_output",
     score_col::Symbol = :PredVal,
-    global_qval_threshold::Float64 = 0.01,
+    global_qval_threshold::Float64 = 1.0,
+    local_qval_threshold::Float64 = 0.05,
     r_lib::Float64 = 1.0,
     show_progress::Bool = true
 )
@@ -108,19 +110,29 @@ function run_efdr_analysis(
         println("Filtered to $(n_after)/$(n_before) PSMs at $(global_qval_threshold) global FDR")
     end
     
-    # Step 5: Remove decoys for EFDR calculation
+    # Step 5: Filter by local q-value to reduce computation time
+    if local_qval_threshold < 1.0
+        n_before = nrow(results_df)
+        local_qvals = results_df.local_qvalue::Vector{Float32}
+        keep_mask = local_qvals .<= local_qval_threshold
+        results_df = results_df[keep_mask, :]
+        n_after = nrow(results_df)
+        println("Filtered to $(n_after)/$(n_before) PSMs at $(local_qval_threshold) local FDR")
+    end
+    
+    # Step 6: Remove decoys for EFDR calculation
     decoy_mask = results_df.decoy::Vector{Bool}
     results_no_decoys = results_df[.!decoy_mask, :]
     println("Analyzing $(nrow(results_no_decoys)) target PSMs")
     
-    # Step 6: Compute pairing vectors
+    # Step 7: Compute pairing vectors
     pairing_info = compute_pairing_vectors(library_df, results_no_decoys; 
                                           show_progress=show_progress)
     
-    # Step 7: Initialize EFDR column
+    # Step 8: Initialize EFDR column
     results_no_decoys[!, :precursor_entrapment_fdr] = zeros(Float32, nrow(results_no_decoys))
     
-    # Step 8: Group by run and calculate EFDR
+    # Step 9: Group by run and calculate EFDR
     if hasproperty(results_no_decoys, :file_name)
         # Add row indices for tracking
         results_no_decoys[!, :_row_idx] = 1:nrow(results_no_decoys)
@@ -178,12 +190,12 @@ function run_efdr_analysis(
         results_no_decoys[!, :precursor_entrapment_fdr] = Float32.(efdr_values)
     end
     
-    # Step 9: Generate outputs
+    # Step 10: Generate outputs
     output_file = joinpath(output_dir, "precursor_entrapment_results.tsv")
     CSV.write(output_file, results_no_decoys, delim='\t')
     println("\nResults saved to: $output_file")
     
-    # Step 10: Create visualization
+    # Step 11: Create visualization
     plot_precursor_efdr_comparison(
         results_no_decoys;
         output_path = joinpath(output_dir, "precursor_efdr_comparison.pdf"),
