@@ -28,11 +28,11 @@
 - [ ] Test compatibility with existing code
 
 ## Phase 4: Update API Usage
-- [ ] Update run_efdr_analysis in api.jl
-  - [ ] Locate paired EFDR calculation section
-  - [ ] Replace get_complement_scores calls with pre-computed values
-  - [ ] Use pairing_info.complement_scores instead
-- [ ] Update run_protein_efdr_analysis similarly
+- [x] Update run_efdr_analysis in api.jl
+  - [x] Locate paired EFDR calculation section
+  - [x] Replace get_complement_scores calls with pre-computed values
+  - [x] Use pairing_info.complement_scores instead
+- [x] Update run_protein_efdr_analysis similarly
 - [ ] Test that EFDR calculations still work
 
 ## Phase 5: Testing & Validation

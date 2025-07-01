@@ -131,10 +131,8 @@ function run_efdr_analysis(
             # Store combined EFDR results
             results_no_decoys[run_indices, :combined_entrapment_fdr] = Float32.(combined_efdr_values)
             
-            # Get complement scores for paired EFDR
-            all_scores = results_no_decoys[!, score_col]::AbstractVector{Float32}
-            complement_scores_all = get_complement_scores(all_scores, pairing_info.complement_indices)
-            complement_scores = complement_scores_all[run_indices]
+            # Get complement scores for paired EFDR (now pre-computed and plex-specific)
+            complement_scores = pairing_info.complement_scores[run_indices]
             
             # Calculate paired EFDR
             paired_efdr_values = calculate_paired_efdr(
@@ -176,11 +174,10 @@ function run_efdr_analysis(
         monotonize!(combined_efdr_values)
         results_no_decoys[!, :combined_entrapment_fdr] = Float32.(combined_efdr_values)
         
-        # Calculate paired EFDR
-        complement_scores = get_complement_scores(scores, pairing_info.complement_indices)
+        # Calculate paired EFDR (using pre-computed plex-specific complement scores)
         paired_efdr_values = calculate_paired_efdr(
             Float64.(scores),
-            Float64.(complement_scores),
+            Float64.(pairing_info.complement_scores),
             pairing_info.is_original,
             Float64.(qvals);
             r = r_lib,
@@ -354,10 +351,8 @@ function run_protein_efdr_analysis(
             # Store combined EFDR results
             protein_no_decoys[run_indices, :combined_protein_fdr] = Float32.(combined_efdr_values)
             
-            # Get complement scores for paired EFDR
-            all_scores = protein_no_decoys[!, score_col]::AbstractVector{Float32}
-            complement_scores_all = get_complement_scores(all_scores, pairing_info.complement_indices)
-            complement_scores = complement_scores_all[run_indices]
+            # Get complement scores for paired EFDR (now pre-computed and plex-specific)
+            complement_scores = pairing_info.complement_scores[run_indices]
             
             # Calculate paired EFDR
             paired_efdr_values = calculate_paired_efdr(
@@ -399,11 +394,10 @@ function run_protein_efdr_analysis(
         monotonize!(combined_efdr_values)
         protein_no_decoys[!, :combined_protein_fdr] = Float32.(combined_efdr_values)
         
-        # Calculate paired EFDR
-        complement_scores = get_complement_scores(scores, pairing_info.complement_indices)
+        # Calculate paired EFDR (using pre-computed plex-specific complement scores)
         paired_efdr_values = calculate_paired_efdr(
             Float64.(scores),
-            Float64.(complement_scores),
+            Float64.(pairing_info.complement_scores),
             pairing_info.is_original,
             Float64.(qvals);
             r = r_lib,
