@@ -159,7 +159,17 @@ include("test/unit/test_protein_analysis.jl")
 ### Issue: Type instability warnings
 **Solution**: Use type assertions when accessing DataFrame columns:
 ```julia
-scores = df[!, :PredVal]::Vector{Float32}
+scores = df[!, :PredVal]::AbstractVector{Float32}
+```
+
+### Issue: "TypeError: expected Vector{Float32}, got SubArray"
+**Solution**: When working with grouped DataFrames, use `AbstractVector` instead of `Vector` for type assertions:
+```julia
+# Wrong - causes TypeError with SubDataFrames
+score_vec = group[!, score_col]::Vector{Float32}
+
+# Correct - handles both Vector and SubArray types
+score_vec = group[!, score_col]::AbstractVector{Float32}
 ```
 
 ## Visualization Specifications
@@ -205,6 +215,18 @@ scores = df[!, :PredVal]::Vector{Float32}
 - Added comprehensive markdown report generation with `generate_analysis_report`
 - Generates separate plots for combined EFDR, paired EFDR, and comparison
 - Saves plots as both PDF and PNG for markdown embedding
+
+### Type Assertion Fix
+- Changed all `Vector{T}` type assertions to `AbstractVector{T}`
+- Fixes TypeError when working with SubDataFrames from grouped operations
+- Allows handling both Vector and SubArray types from DataFrame column access
+
+## Development Guidelines for Claude
+
+### Key Instructions
+1. **Make commits as you go** - Commit changes incrementally as you work on tasks
+2. **Don't run tests yourself** - Ask the user to run tests and provide instructions on how to run them
+3. **Ask for help when confused** - Request clarification whenever there's uncertainty about requirements or implementation
 
 ## Future Improvements to Consider
 
