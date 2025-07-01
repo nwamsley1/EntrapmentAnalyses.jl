@@ -1,11 +1,11 @@
 # Implementation Checklist: Plex-Specific Pairing
 
 ## Phase 1: Add Type Definitions
-- [ ] Add struct definitions to pairing.jl
-  - [ ] Define PeptideKey struct
-  - [ ] Define PlexPairKey struct
-  - [ ] Define ScorePair struct
-  - [ ] Add hash and equality methods for structs
+- [x] Add struct definitions to pairing.jl
+  - [x] Define PeptideKey struct
+  - [x] Define PlexPairKey struct
+  - [x] Define ScorePair struct
+  - [x] Add hash and equality methods for structs
 - [ ] Test that types work correctly
 
 ## Phase 2: Implement Helper Functions

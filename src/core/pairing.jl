@@ -1,5 +1,38 @@
 # Efficient pairing system for entrapment analysis
 
+# Type definitions for plex-specific pairing
+
+"""
+Type for peptide identification based on sequence and charge.
+"""
+struct PeptideKey
+    mod_seq::String
+    z::UInt8
+end
+
+"""
+Type for plex-specific pairing within a file.
+"""
+struct PlexPairKey
+    plex::UInt8
+    pair_id::Int64
+end
+
+"""
+Type for storing original and entrapment scores.
+"""
+struct ScorePair
+    original_score::Float32
+    entrapment_score::Float32
+end
+
+# Make types hashable and comparable
+Base.hash(k::PeptideKey, h::UInt) = hash((k.mod_seq, k.z), h)
+Base.:(==)(a::PeptideKey, b::PeptideKey) = a.mod_seq == b.mod_seq && a.z == b.z
+
+Base.hash(k::PlexPairKey, h::UInt) = hash((k.plex, k.pair_id), h)
+Base.:(==)(a::PlexPairKey, b::PlexPairKey) = a.plex == b.plex && a.pair_id == b.pair_id
+
 """
     compute_pairing_vectors(lib_sequences, lib_charges, lib_entrap_groups, 
                            lib_pair_ids, results_sequences, results_charges; 
@@ -22,7 +55,7 @@ Named tuple with:
 - `entrap_labels`: Int vector with entrapment group IDs
 - `complement_indices`: Int vector with indices of paired sequences (-1 if no pair)
 """
-(
+function compute_pairing_vectors(
     lib_sequences::AbstractVector{<:AbstractString},
     lib_charges::AbstractVector{<:Integer},
     lib_entrap_groups::AbstractVector{<:Integer},
