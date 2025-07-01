@@ -43,7 +43,7 @@ function run_efdr_analysis(
     entrap_seqs = Set{String}()
     
     entrap_groups = library_df.EntrapmentGroupId::AbstractVector{Int}
-    peptide_seqs = library_df.PeptideSequence::AbstractVector{String}
+    peptide_seqs = library_df.PeptideSequence::AbstractVector{<:AbstractString}
     
     for i in eachindex(entrap_groups)
         if entrap_groups[i] == 0

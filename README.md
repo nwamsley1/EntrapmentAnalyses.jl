@@ -1,6 +1,6 @@
 # EntrapmentAnalyses.jl
 
-A Julia module for entrapment-based false discovery rate (FDR) analysis in proteomics data.
+A Julia module to calculate entrapment false-discovery proportion from JMod results 
 
 ## Installation
 
@@ -26,6 +26,18 @@ protein_results = run_protein_efdr_analysis([parquet_file], library_file; output
 
 # Generate comprehensive report with all visualizations
 generate_analysis_report(results, "analysis_output")
+
+
+parquet_files = [ppath for ppath in readdir("/Users/nathanwamsley/Data/May2025/kmd_jmod_search/9plex/05202025", join=true) if endswith(ppath, ".parquet")]
+library_path = "/Users/nathanwamsley/Data/May2025/spec_libs/parsed_libs/hs_tag6_predlib_JDRT_480_1000_2ng_shufentrap_noloss_051925_jmod.tsv"
+output_dir =  "/Users/nathanwamsley/Desktop/efdr_9plex_paired_output"
+run_efdr_analysis(parquet_files, library_path, output_dir = output_dir)
+
+
+parquet_files = [ppath for ppath in readdir("/Users/nathanwamsley/Data/May2025/kmd_jmod_search/LF/attempt7", join=true) if endswith(ppath, ".parquet")]
+library_path = "/Users/nathanwamsley/Data/May2025/spec_libs/parsed_libs/JD_LF_HY_wshuffledentrap_paired_noloss_051925.tsv"
+output_dir =  "/Users/nathanwamsley/Desktop/efdr_lf_paired_output"
+run_efdr_analysis(parquet_files, library_path, output_dir = output_dir )
 ```
 
 ## Key Functions
@@ -102,7 +114,7 @@ generate_analysis_report(
 
 ## Algorithm Details
 
-The module implements entrapment-based FDR estimation following the Noble lab methodology:
+The module implements entrapment-based FDR estimation following the Noble lab methodology (Wen et al. 2025):
 
 - **Combined EFDR**: `(Nε × (1 + 1/r)) / (Nτ + Nε)`
 - **Paired EFDR**: `(Nε + Nεsτ + 2×Nετs) / (Nτ + Nε)`

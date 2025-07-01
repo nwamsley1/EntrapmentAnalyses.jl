@@ -136,7 +136,10 @@ function calculate_paired_efdr(
     end
     
     # Main calculation with progress monitoring
-    pb = show_progress ? ProgressBar(1:total_ops) : nothing
+    #pb = show_progress ? ProgressBar(1:total_ops) : nothing
+    pb = ProgressBar(total=total_ops)
+    completed_ops = 0
+    last_update = 0
     if show_progress
         set_description(pb, "Calculating Paired EFDR")
     end
@@ -165,10 +168,10 @@ function calculate_paired_efdr(
                 end
             end
             
-            # Update progress
-            if show_progress
-                completed_ops += 1
-                update(pb)
+            completed_ops += 1
+            if completed_ops % 1000 == 0
+                update(pb, completed_ops-last_update)
+                last_update = completed_ops
             end
         end
         

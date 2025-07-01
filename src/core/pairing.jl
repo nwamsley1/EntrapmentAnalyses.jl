@@ -22,8 +22,8 @@ Named tuple with:
 - `entrap_labels`: Int vector with entrapment group IDs
 - `complement_indices`: Int vector with indices of paired sequences (-1 if no pair)
 """
-function compute_pairing_vectors(
-    lib_sequences::AbstractVector{String},
+(
+    lib_sequences::AbstractVector{<:AbstractString},
     lib_charges::AbstractVector{<:Integer},
     lib_entrap_groups::AbstractVector{<:Integer},
     lib_pair_ids::AbstractVector{<:Integer},
