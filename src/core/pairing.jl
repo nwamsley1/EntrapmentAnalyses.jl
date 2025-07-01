@@ -37,10 +37,11 @@ Base.hash(k::PlexPairKey, h::UInt) = hash((k.plex, k.pair_id), h)
 Base.:(==)(a::PlexPairKey, b::PlexPairKey) = a.plex == b.plex && a.pair_id == b.pair_id
 
 """
-    compute_pairing_vectors(lib_sequences, lib_charges, lib_entrap_groups, 
+    compute_pairing_vectors_old(lib_sequences, lib_charges, lib_entrap_groups, 
                            lib_pair_ids, results_sequences, results_charges; 
                            show_progress=true)
 
+[DEPRECATED] Old version of compute_pairing_vectors without plex-specific pairing.
 Core function to compute pairing information as vectors for efficient EFDR calculation.
 
 # Arguments
@@ -58,7 +59,7 @@ Named tuple with:
 - `entrap_labels`: Int vector with entrapment group IDs
 - `complement_indices`: Int vector with indices of paired sequences (-1 if no pair)
 """
-function compute_pairing_vectors(
+function compute_pairing_vectors_old(
     lib_sequences::AbstractVector{<:AbstractString},
     lib_charges::AbstractVector{<:Integer},
     lib_entrap_groups::AbstractVector{<:Integer},
@@ -157,9 +158,9 @@ function compute_pairing_vectors(
 end
 
 """
-    compute_pairing_vectors(library_df::DataFrame, results_df::DataFrame; kwargs...)
+    compute_pairing_vectors_old(library_df::DataFrame, results_df::DataFrame; kwargs...)
 
-DataFrame wrapper for compute_pairing_vectors that extracts the appropriate columns.
+[DEPRECATED] DataFrame wrapper for old compute_pairing_vectors that extracts the appropriate columns.
 
 # Keyword Arguments
 - `lib_seq_col`: Library sequence column (default: :PeptideSequence)
@@ -170,7 +171,7 @@ DataFrame wrapper for compute_pairing_vectors that extracts the appropriate colu
 - `results_charge_col`: Results charge column (default: :z)
 - `show_progress`: Show progress bars (default: true)
 """
-function compute_pairing_vectors(
+function compute_pairing_vectors_old(
     library_df::DataFrame,
     results_df::DataFrame;
     lib_seq_col::Symbol = :PeptideSequence,
@@ -181,7 +182,7 @@ function compute_pairing_vectors(
     results_charge_col::Symbol = :z,
     show_progress::Bool = true
 )
-    return compute_pairing_vectors(
+    return compute_pairing_vectors_old(
         library_df[!, lib_seq_col],
         library_df[!, lib_charge_col],
         library_df[!, lib_entrap_col],
@@ -379,4 +380,92 @@ function add_plex_complement_scores!(
     end
     
     return results_df
+end
+
+"""
+    compute_pairing_vectors(library_df::DataFrame, results_df::DataFrame; kwargs...)
+
+Compute plex-aware pairing vectors with file and plex-specific complement scores.
+
+# Arguments
+- `library_df`: Library DataFrame with entrapment pairs
+- `results_df`: Results DataFrame with PSM data
+
+# Keyword Arguments
+- `lib_seq_col`: Library sequence column (default: :PeptideSequence)
+- `lib_charge_col`: Library charge column (default: :PrecursorCharge)
+- `lib_entrap_col`: Library entrapment group column (default: :EntrapmentGroupId)
+- `lib_pair_col`: Library pair ID column (default: :PrecursorIdx)
+- `results_seq_col`: Results sequence column (default: :stripped_seq)
+- `results_charge_col`: Results charge column (default: :z)
+- `channel_col`: Channel/plex column (default: :channel)
+- `score_col`: Score column (default: :PredVal)
+- `file_col`: File name column (default: :file_name)
+- `show_progress`: Show progress bars (default: true)
+
+# Returns
+Named tuple with:
+- `is_original`: Bool vector indicating if each result is an original sequence
+- `pair_indices`: Int vector with pair IDs for each result
+- `entrap_labels`: Int vector with entrapment group IDs
+- `complement_indices`: Int vector (deprecated, always -1)
+- `complement_scores`: Float32 vector with plex-specific complement scores
+"""
+function compute_pairing_vectors(
+    library_df::DataFrame,
+    results_df::DataFrame;
+    lib_seq_col::Symbol = :PeptideSequence,
+    lib_charge_col::Symbol = :PrecursorCharge,
+    lib_entrap_col::Symbol = :EntrapmentGroupId,
+    lib_pair_col::Symbol = :PrecursorIdx,
+    results_seq_col::Symbol = :stripped_seq,
+    results_charge_col::Symbol = :z,
+    channel_col::Symbol = :channel,
+    score_col::Symbol = :PredVal,
+    file_col::Symbol = :file_name,
+    show_progress::Bool = true
+)
+    println("Computing plex-aware pairing vectors...")
+    
+    # Step 1: Initialize dictionaries from library (done once)
+    pair_dict, is_original_dict = init_entrapment_pairs_dict(
+        library_df;
+        mod_seq_col = lib_seq_col,
+        charge_col = lib_charge_col,
+        entrap_group_col = lib_entrap_col,
+        pair_column = lib_pair_col
+    )
+    
+    # Step 2: Add complement scores to the dataframe (handles per-file logic internally)
+    add_plex_complement_scores!(
+        results_df,
+        pair_dict,
+        is_original_dict;
+        score_col = score_col,
+        channel_col = channel_col,
+        seq_col = results_seq_col,
+        charge_col = results_charge_col,
+        file_col = file_col,
+        show_progress = show_progress
+    )
+    
+    # Step 3: Extract vectors for compatibility with existing code
+    n_results = nrow(results_df)
+    is_original_vec = results_df[!, :is_original]
+    pair_indices_vec = results_df[!, :pair_id]
+    complement_scores_vec = results_df[!, :complement_score]
+    
+    # Create entrap_labels from is_original
+    entrap_labels_vec = [orig ? 0 : 1 for orig in is_original_vec]
+    
+    # For backward compatibility
+    complement_indices = fill(-1, n_results)
+    
+    return (
+        is_original = is_original_vec,
+        pair_indices = pair_indices_vec,
+        entrap_labels = entrap_labels_vec,
+        complement_indices = complement_indices,  # Deprecated
+        complement_scores = complement_scores_vec # File & plex specific!
+    )
 end

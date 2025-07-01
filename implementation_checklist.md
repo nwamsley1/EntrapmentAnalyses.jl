@@ -19,12 +19,12 @@
   - [ ] Test with sample data
 
 ## Phase 3: Update compute_pairing_vectors
-- [ ] Backup current compute_pairing_vectors function
-- [ ] Replace with new implementation
-  - [ ] Call init_entrapment_pairs_dict
-  - [ ] Call add_plex_complement_scores!
-  - [ ] Extract vectors for return value
-  - [ ] Include complement_scores in return tuple
+- [x] Backup current compute_pairing_vectors function
+- [x] Replace with new implementation
+  - [x] Call init_entrapment_pairs_dict
+  - [x] Call add_plex_complement_scores!
+  - [x] Extract vectors for return value
+  - [x] Include complement_scores in return tuple
 - [ ] Test compatibility with existing code
 
 ## Phase 4: Update API Usage
