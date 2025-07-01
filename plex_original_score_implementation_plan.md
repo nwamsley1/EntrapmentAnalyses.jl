@@ -232,69 +232,9 @@ function compute_pairing_vectors(
 end
 ```
 
-### 3. Alternative Approach: Process During EFDR Calculation
+### 3. Usage in API
 
-If we want to avoid modifying the global dataframe, we can build the plex scores on-the-fly:
-
-```julia
-function get_plex_complement_scores_for_run(
-    run_df::DataFrame,
-    pair_dict::Dict{PeptideKey, Int64},
-    is_original_dict::Dict{PeptideKey, Bool};
-    score_col::Symbol = :PredVal,
-    channel_col::Symbol = :channel,
-    seq_col::Symbol = :stripped_seq,
-    charge_col::Symbol = :z
-)
-    # Build plex score dictionary for this specific run
-    plex_prec_to_scores = Dict{PlexPairKey, ScorePair}()
-    
-    # First pass: build scores
-    for i in 1:nrow(run_df)
-        peptide_key = PeptideKey(run_df[i, seq_col], UInt8(run_df[i, charge_col]))
-        plex = UInt8(run_df[i, channel_col])
-        pair_id = pair_dict[peptide_key]
-        plex_key = PlexPairKey(plex, pair_id)
-        is_original = is_original_dict[peptide_key]
-        
-        if !haskey(plex_prec_to_scores, plex_key)
-            plex_prec_to_scores[plex_key] = ScorePair(-1.0f0, -1.0f0)
-        end
-        
-        scores = plex_prec_to_scores[plex_key]
-        
-        if is_original
-            plex_prec_to_scores[plex_key] = ScorePair(Float32(run_df[i, score_col]), scores.entrapment_score)
-        else
-            plex_prec_to_scores[plex_key] = ScorePair(scores.original_score, Float32(run_df[i, score_col]))
-        end
-    end
-    
-    # Second pass: extract complement scores
-    complement_scores = Vector{Float32}(undef, nrow(run_df))
-    
-    for i in 1:nrow(run_df)
-        peptide_key = PeptideKey(run_df[i, seq_col], UInt8(run_df[i, charge_col]))
-        plex = UInt8(run_df[i, channel_col])
-        pair_id = pair_dict[peptide_key]
-        plex_key = PlexPairKey(plex, pair_id)
-        is_original = is_original_dict[peptide_key]
-        
-        if haskey(plex_prec_to_scores, plex_key)
-            scores = plex_prec_to_scores[plex_key]
-            complement_scores[i] = is_original ? scores.entrapment_score : scores.original_score
-        else
-            complement_scores[i] = -1.0f0
-        end
-    end
-    
-    return complement_scores
-end
-```
-
-### 4. Usage in API
-
-#### Option A: Modify dataframe once (recommended)
+The key implementation in `api.jl` will be:
 
 ```julia
 # In run_efdr_analysis:
@@ -304,37 +244,25 @@ pairing_info = compute_pairing_vectors(library_df, results_no_decoys; show_progr
 # Now results_no_decoys has complement_score column with file & plex specific values
 # When processing by file, the complement scores are already correct
 for (key, run_df) in pairs(groupby(results_no_decoys, :file_name))
-    # complement_scores are already in the dataframe
+    # Get indices for this run in the parent DataFrame
+    run_indices = run_df._row_idx
+    
+    # Extract pairing info for this run using the pre-computed columns
+    run_is_original = pairing_info.is_original[run_indices]
+    run_complement_scores = pairing_info.complement_scores[run_indices]
+    
+    # Calculate paired EFDR using the file & plex specific complement scores
     paired_efdr_values = calculate_paired_efdr(
         Float64.(run_df[!, score_col]),
-        Float64.(run_df[!, :complement_score]),  # Already file & plex specific!
-        run_df[!, :is_original],
+        Float64.(run_complement_scores),  # Already file & plex specific!
+        run_is_original,
         Float64.(run_df[!, :local_qvalue]);
         r = r_lib,
         show_progress = show_progress
     )
-end
-```
-
-#### Option B: Calculate on-the-fly
-
-```julia
-# Build global dictionaries once
-pair_dict, is_original_dict = init_entrapment_pairs_dict(library_df)
-
-# Process each file
-for (key, run_df) in pairs(groupby(results_no_decoys, :file_name))
-    # Get complement scores for this run
-    complement_scores = get_plex_complement_scores_for_run(
-        run_df, pair_dict, is_original_dict
-    )
     
-    # Calculate EFDR
-    paired_efdr_values = calculate_paired_efdr(
-        Float64.(run_df[!, score_col]),
-        Float64.(complement_scores),
-        # ... other params
-    )
+    # Assign back to parent DataFrame
+    results_no_decoys[run_indices, :precursor_entrapment_fdr] = Float32.(paired_efdr_values)
 end
 ```
 
@@ -342,19 +270,31 @@ end
 
 1. **Efficiency**: Library dictionaries built once, not per file
 2. **Correctness**: Plex scores are file-specific as in the notebook
-3. **Flexibility**: Can either modify dataframe or calculate on-the-fly
+3. **Simplicity**: DataFrame is modified once with all needed columns
 4. **Clear separation**: Global pairing info vs file-specific scores
 
 ## What Stays the Same
 
 - All EFDR calculation methods remain unchanged
-- The interface mostly stays the same
+- The calculate_paired_efdr function signature stays the same
 - Backward compatibility is maintained
+
+## Files That Will Be Modified
+
+1. **pairing.jl**: Add new functions and replace compute_pairing_vectors
+2. **api.jl**: Update to use the new pairing approach with complement_scores
+
+## Functions That Become Obsolete
+
+1. **get_complement_scores** in pairing.jl - replaced by plex-aware scoring
+2. **complement_indices** field - deprecated, kept only for compatibility
 
 ## Summary
 
-The key insight is separating:
-1. **Global information** from library (pair IDs, original/entrapment status)
-2. **File-specific information** (actual scores within each file/plex combination)
+This implementation:
+1. Builds global dictionaries once from the library
+2. Processes each file to build plex-specific score dictionaries
+3. Adds complement_score, is_original, and pair_id columns to the DataFrame
+4. Uses these pre-computed values during EFDR calculation
 
-This matches the notebook's behavior while being more efficient than rebuilding dictionaries for each file.
+This matches the notebook's behavior exactly while being efficient and maintainable.
