@@ -42,9 +42,9 @@
 - [ ] Run existing tests to ensure compatibility
 
 ## Phase 6: Cleanup
-- [ ] Mark get_complement_scores as deprecated
-- [ ] Update documentation
-- [ ] Commit all changes
+- [x] Mark get_complement_scores as deprecated
+- [x] Update documentation
+- [x] Commit all changes
 
 ## Notes
 - Make incremental commits after each major step

@@ -196,10 +196,15 @@ end
 """
     get_complement_scores(scores::AbstractVector{T}, complement_indices::AbstractVector{Int}) where T
 
-Extract complement scores based on complement indices.
+[DEPRECATED] Extract complement scores based on complement indices.
 Returns -1.0 for entries with no complement (complement_indices[i] == -1).
+
+This function is deprecated. Use compute_pairing_vectors which now returns
+plex-specific complement_scores in the result tuple.
 """
 function get_complement_scores(scores::AbstractVector{T}, complement_indices::AbstractVector{Int}) where T<:Real
+    @warn "get_complement_scores is deprecated. Use compute_pairing_vectors which returns plex-specific complement_scores." maxlog=1
+    
     n = length(scores)
     if length(complement_indices) != n
         error("Scores and complement_indices must have the same length")
