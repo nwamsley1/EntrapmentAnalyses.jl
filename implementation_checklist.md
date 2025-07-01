@@ -9,13 +9,13 @@
 - [ ] Test that types work correctly
 
 ## Phase 2: Implement Helper Functions
-- [ ] Add init_entrapment_pairs_dict function
+- [x] Add init_entrapment_pairs_dict function
   - [ ] Test with sample library data
-- [ ] Add add_plex_complement_scores! function
-  - [ ] Implement first pass to populate is_original and pair_id
-  - [ ] Implement per-file processing loop
-  - [ ] Implement score dictionary building
-  - [ ] Implement complement score assignment
+- [x] Add add_plex_complement_scores! function
+  - [x] Implement first pass to populate is_original and pair_id
+  - [x] Implement per-file processing loop
+  - [x] Implement score dictionary building
+  - [x] Implement complement score assignment
   - [ ] Test with sample data
 
 ## Phase 3: Update compute_pairing_vectors

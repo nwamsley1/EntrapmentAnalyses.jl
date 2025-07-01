@@ -1,5 +1,8 @@
 # Efficient pairing system for entrapment analysis
 
+using DataFrames
+using ProgressBars
+
 # Type definitions for plex-specific pairing
 
 """
@@ -212,4 +215,168 @@ function get_complement_scores(scores::AbstractVector{T}, complement_indices::Ab
     end
     
     return complement_scores
+end
+
+# New functions for plex-specific pairing
+
+"""
+    init_entrapment_pairs_dict(lib_df::DataFrame; kwargs...)
+
+Initialize dictionaries from the spectral library for pairing information.
+
+# Arguments
+- `lib_df`: Library DataFrame
+
+# Keyword Arguments
+- `mod_seq_col`: Column for peptide sequence (default: :PeptideSequence)
+- `charge_col`: Column for charge state (default: :PrecursorCharge)
+- `entrap_group_col`: Column for entrapment group ID (default: :EntrapmentGroupId)
+- `pair_column`: Column for pair ID (default: :PrecursorIdx)
+
+# Returns
+Tuple of (pair_dict, is_original_dict)
+"""
+function init_entrapment_pairs_dict(
+    lib_df::DataFrame;
+    mod_seq_col::Symbol = :PeptideSequence,
+    charge_col::Symbol = :PrecursorCharge,
+    entrap_group_col::Symbol = :EntrapmentGroupId,
+    pair_column::Symbol = :PrecursorIdx
+)
+    # Create dictionary for pair IDs
+    pair_dict = Dict{PeptideKey, Int64}()
+    
+    # Create dictionary for original/entrapment status
+    is_original_dict = Dict{PeptideKey, Bool}()
+    
+    for row_idx in 1:nrow(lib_df)
+        mod_seq_value = lib_df[row_idx, mod_seq_col]  
+        z = UInt8(lib_df[row_idx, charge_col])
+        key = PeptideKey(mod_seq_value, z)
+        
+        if !haskey(pair_dict, key)
+            pair_dict[key] = lib_df[row_idx, pair_column]
+            is_original_dict[key] = iszero(lib_df[row_idx, entrap_group_col])
+        end
+    end
+    
+    return pair_dict, is_original_dict
+end
+
+"""
+    add_plex_complement_scores!(results_df::DataFrame, pair_dict, is_original_dict; kwargs...)
+
+Add plex-specific complement scores to the results DataFrame.
+
+Modifies the DataFrame in place by adding:
+- `complement_score`: Plex-specific complement scores (-1 if no pair)
+- `is_original`: Boolean indicating if peptide is original
+- `pair_id`: Pair identifier from library
+
+# Arguments
+- `results_df`: Results DataFrame to modify
+- `pair_dict`: Dictionary mapping PeptideKey to pair IDs
+- `is_original_dict`: Dictionary mapping PeptideKey to original status
+
+# Keyword Arguments
+- `score_col`: Score column (default: :PredVal)
+- `channel_col`: Channel/plex column (default: :channel)
+- `seq_col`: Sequence column (default: :stripped_seq)
+- `charge_col`: Charge column (default: :z)
+- `file_col`: File name column (default: :file_name)
+- `show_progress`: Show progress (default: true)
+"""
+function add_plex_complement_scores!(
+    results_df::DataFrame,
+    pair_dict::Dict{PeptideKey, Int64},
+    is_original_dict::Dict{PeptideKey, Bool};
+    score_col::Symbol = :PredVal,
+    channel_col::Symbol = :channel,
+    seq_col::Symbol = :stripped_seq,
+    charge_col::Symbol = :z,
+    file_col::Symbol = :file_name,
+    show_progress::Bool = true
+)
+    # Add complement score column if it doesn't exist
+    if !hasproperty(results_df, :complement_score)
+        results_df[!, :complement_score] = fill(-1.0f0, nrow(results_df))
+    end
+    
+    # Add is_original and pair_id columns for later use
+    if !hasproperty(results_df, :is_original)
+        results_df[!, :is_original] = Vector{Bool}(undef, nrow(results_df))
+    end
+    if !hasproperty(results_df, :pair_id)
+        results_df[!, :pair_id] = Vector{Int}(undef, nrow(results_df))
+    end
+    
+    # First pass: populate is_original and pair_id for all rows
+    for i in 1:nrow(results_df)
+        peptide_key = PeptideKey(results_df[i, seq_col], UInt8(results_df[i, charge_col]))
+        if haskey(pair_dict, peptide_key)
+            results_df[i, :is_original] = is_original_dict[peptide_key]
+            results_df[i, :pair_id] = pair_dict[peptide_key]
+        else
+            error("Sequence not found in library: $(results_df[i, seq_col]) with charge $(results_df[i, charge_col])")
+        end
+    end
+    
+    # Process each file separately
+    file_groups = groupby(results_df, file_col)
+    
+    for (file_key, file_df) in pairs(file_groups)
+        if show_progress
+            println("Processing file: $(file_key[file_col])")
+        end
+        
+        # Build plex score dictionary for this file
+        plex_prec_to_scores = Dict{PlexPairKey, ScorePair}()
+        
+        # First pass: build the score dictionary
+        for row in eachrow(file_df)
+            plex = UInt8(row[channel_col])
+            pair_id = row[:pair_id]
+            plex_key = PlexPairKey(plex, pair_id)
+            
+            # Initialize if needed
+            if !haskey(plex_prec_to_scores, plex_key)
+                plex_prec_to_scores[plex_key] = ScorePair(-1.0f0, -1.0f0)
+            end
+            
+            # Get current scores
+            scores = plex_prec_to_scores[plex_key]
+            
+            # Update the appropriate score
+            if row[:is_original]
+                plex_prec_to_scores[plex_key] = ScorePair(
+                    Float32(row[score_col]), 
+                    scores.entrapment_score
+                )
+            else
+                plex_prec_to_scores[plex_key] = ScorePair(
+                    scores.original_score,
+                    Float32(row[score_col])
+                )
+            end
+        end
+        
+        # Second pass: assign complement scores
+        for row in eachrow(file_df)
+            plex = UInt8(row[channel_col])
+            pair_id = row[:pair_id]
+            plex_key = PlexPairKey(plex, pair_id)
+            
+            if haskey(plex_prec_to_scores, plex_key)
+                scores = plex_prec_to_scores[plex_key]
+                if row[:is_original]
+                    row[:complement_score] = scores.entrapment_score
+                else
+                    row[:complement_score] = scores.original_score
+                end
+            end
+            # If not found, remains -1
+        end
+    end
+    
+    return results_df
 end
