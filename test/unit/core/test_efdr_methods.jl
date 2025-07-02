@@ -25,6 +25,10 @@ using EntrapmentAnalyses
             # i=3: score=0.7, entrap=0 -> Nτ=2, Nε=1 -> efdr=(1*2)/3=0.667
             # etc.
             @test efdr[1] ≈ 0.0  # First item (highest score, lowest qval)
+            @test efdr[2] ≈ 1 
+            @test efdr[3] ≈ 2/3 
+            @test efdr[4] ≈ 1 
+            @test efdr[5] ≈ 4/5
         end
         
         # Test with all originals
@@ -63,12 +67,12 @@ using EntrapmentAnalyses
             
             efdr_r1 = EntrapmentAnalyses.calculate_combined_efdr(
                 scores, entrap_labels, qvals;
-                r = 1.0, show_progress = false
+                r = 1.0f0, show_progress = false
             )
             
             efdr_r2 = EntrapmentAnalyses.calculate_combined_efdr(
                 scores, entrap_labels, qvals;
-                r = 2.0, show_progress = false
+                r = 2.0f0, show_progress = false
             )
             
             # Different r values should give different results
@@ -104,6 +108,7 @@ using EntrapmentAnalyses
             
             @test length(efdr) == 4
             @test all(0 .<= efdr .<= 1)
+            @test efdr ≈ [0, 1/2, 1/3, 1/2]  # Expected EFDR values
         end
         
         # Test unpaired peptides
@@ -139,8 +144,28 @@ using EntrapmentAnalyses
             # When s=0.7: neither condition is met (e_score < s)
             # When s=0.6: e_score >= s && s > o_score is true
             @test length(efdr) == 3
+            @test efdr ≈ [0.0, 0.0, 2/3]  # First two originals, last is entrapment
         end
         
+        @testset "Mutually exclusive conditions Nets and Nest" begin
+            # Case 1: e_score >= s && s > o_score (Nεsτ case)
+            scores = Float32[0.8, 0.7, 0.6, 0.5]  # s = 0.7 for middle
+            complement_scores = Float32[0.0, 0.0, 0.5, 0.6]  # o_score = 0.5 for last
+            is_original = [true, true, false, true]  # Last is entrapment
+            qvals = Float32[0.01, 0.02, 0.03, 0.04]
+            
+            efdr = EntrapmentAnalyses.calculate_paired_efdr(
+                scores, complement_scores, is_original, qvals;
+                show_progress = false
+            )
+            
+            # For the entrapment: e_score=0.6, o_score=0.5
+            # When s=0.7: neither condition is met (e_score < s)
+            # When s=0.6: e_score >= s && s > o_score is true
+            @test length(efdr) == 4
+            @test efdr ≈ [0.0, 0.0, 2/3, 3/4]  # First two originals, last is entrapment
+        end
+
         # Test with all originals
         @testset "All originals" begin
             scores = Float32[0.9, 0.8, 0.7]

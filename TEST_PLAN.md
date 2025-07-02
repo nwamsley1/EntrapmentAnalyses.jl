@@ -9,7 +9,7 @@ This document outlines the comprehensive testing plan for the EntrapmentAnalyses
 - [x] Step 3: Test io/data_loaders.jl
 - [x] Step 4: Test core/pairing.jl
 - [x] Step 5: Test core/efdr_methods.jl
-- [ ] Step 6: Test core/scoring.jl
+- [x] Step 6: Test core/scoring.jl
 - [ ] Step 7: Test analysis/qvalue_calculation.jl
 - [ ] Step 8: Test analysis/protein_analysis.jl
 - [ ] Step 9: Test analysis/efdr_analysis.jl

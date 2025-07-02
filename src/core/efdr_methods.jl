@@ -111,30 +111,7 @@ function calculate_paired_efdr(
     # Pre-compute total operations for accurate progress
     total_ops = sum(1:n)  # n*(n+1)/2
     completed_ops = 0
-    
-    # Pre-compute score relationships
-    println("Pre-computing score relationships...")
-    score_rels = Vector{Symbol}(undef, n)
-    
-    for i in 1:n
-        if is_original[i]
-            score_rels[i] = :original
-        else
-            e_score = scores[i]
-            o_score = complement_scores[i]
-            
-            if o_score < 0  # No complement
-                score_rels[i] = :unpaired
-            elseif e_score > o_score
-                score_rels[i] = :entrap_wins
-            elseif e_score == o_score
-                score_rels[i] = :tie
-            else
-                score_rels[i] = :original_wins
-            end
-        end
-    end
-    
+
     # Main calculation with progress monitoring
     #pb = show_progress ? ProgressBar(1:total_ops) : nothing
     pb = ProgressBar(total=total_ops)

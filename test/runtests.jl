@@ -19,5 +19,6 @@ using EntrapmentAnalyses
         # Core tests
         include("unit/core/test_pairing.jl")
         include("unit/core/test_efdr_methods.jl")
+        include("unit/core/test_scoring.jl")
     end
 end
