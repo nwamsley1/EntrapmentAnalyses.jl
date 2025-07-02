@@ -1,9 +1,9 @@
 # EntrapmentAnalyses.jl
 
-[![Build Status](https://github.com/nathanwamsley/EntrapmentAnalyses.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/nathanwamsley/EntrapmentAnalyses.jl/actions/workflows/CI.yml?query=branch%3Amaster)
-[![codecov](https://codecov.io/gh/nathanwamsley/EntrapmentAnalyses.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/nathanwamsley/EntrapmentAnalyses.jl)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://nathanwamsley.github.io/EntrapmentAnalyses.jl/stable)
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://nathanwamsley.github.io/EntrapmentAnalyses.jl/dev)
+[![Build Status](https://github.com/nwamsley1/EntrapmentAnalyses.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/nwamsley1/EntrapmentAnalyses.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+[![codecov](https://codecov.io/gh/nwamsley1/EntrapmentAnalyses.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/nwamsley1/EntrapmentAnalyses.jl)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://nwamsley1.github.io/EntrapmentAnalyses.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://nwamsley1.github.io/EntrapmentAnalyses.jl/dev)
 
 A Julia package for calculating entrapment-based false discovery rate (FDR) in proteomics data. Implements both combined and paired empirical FDR methods for precursor-level and protein-level analyses. 
 

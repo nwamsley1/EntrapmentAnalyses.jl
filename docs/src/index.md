@@ -4,8 +4,8 @@ CurrentModule = EntrapmentAnalyses
 
 # EntrapmentAnalyses.jl
 
-[![Build Status](https://github.com/nathanwamsley/EntrapmentAnalyses.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/nathanwamsley/EntrapmentAnalyses.jl/actions/workflows/CI.yml?query=branch%3Amaster)
-[![codecov](https://codecov.io/gh/nathanwamsley/EntrapmentAnalyses.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/nathanwamsley/EntrapmentAnalyses.jl)
+[![Build Status](https://github.com/nwamsley1/EntrapmentAnalyses.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/nwamsley1/EntrapmentAnalyses.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+[![codecov](https://codecov.io/gh/nwamsley1/EntrapmentAnalyses.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/nwamsley1/EntrapmentAnalyses.jl)
 
 EntrapmentAnalyses.jl is a Julia package for entrapment-based false discovery rate (FDR) analysis in proteomics data. It implements both combined and paired empirical FDR (EFDR) methods for precursor-level and protein-level analyses.
 

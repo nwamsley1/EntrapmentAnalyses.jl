@@ -8,7 +8,7 @@ makedocs(;
     authors="Nathan Wamsley and contributors",
     sitename="EntrapmentAnalyses.jl",
     format=Documenter.HTML(;
-        canonical="https://nathanwamsley.github.io/EntrapmentAnalyses.jl",
+        canonical="https://nwamsley1.github.io/EntrapmentAnalyses.jl",
         edit_link="master",
         assets=String[],
     ),
@@ -24,6 +24,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/nathanwamsley/EntrapmentAnalyses.jl",
+    repo="github.com/nwamsley1/EntrapmentAnalyses.jl",
     devbranch="master",
 )
