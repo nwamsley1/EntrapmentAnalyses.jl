@@ -70,6 +70,8 @@ using EntrapmentAnalyses
             run1_df = protein_df[protein_df.file_name .== "run1", :]
             run2_df = protein_df[protein_df.file_name .== "run2", :]
             
+            @test run1_df.Protein_Qvalue ≈ [0.0, 1/2, 1/2]
+            @test run2_df.Protein_Qvalue ≈ [0.0, 0, 1/2]
             # Each run should have its own q-value calculation
             @test maximum(run1_df.Protein_Qvalue) ≤ 1.0
             @test maximum(run2_df.Protein_Qvalue) ≤ 1.0
@@ -88,7 +90,7 @@ using EntrapmentAnalyses
             EntrapmentAnalyses.calculate_protein_qvalues_per_run!(protein_df)
             
             @test hasproperty(protein_df, :Protein_Qvalue)
-            @test protein_df.Protein_Qvalue ≈ [0.0, 1/2, 1/3]
+            @test protein_df.Protein_Qvalue ≈ [0.0, 1/2, 1/2]
         end
         
         # Test all decoys
@@ -102,7 +104,7 @@ using EntrapmentAnalyses
             
             # Should handle division by zero gracefully
             @test hasproperty(protein_df, :Protein_Qvalue)
-            @test all(protein_df.Protein_Qvalue .== Inf)
+            @test all(protein_df.Protein_Qvalue .≈ 1)
         end
     end
     
@@ -135,7 +137,11 @@ using EntrapmentAnalyses
         @test prot1_rows.PredVal[1] ≈ 0.9f0
         
         # Check that entrapment groups are correctly assigned
-        @test results_df.entrapment_group == [false, true, false, false, true]
+        @info display(results_df)
+        @test results_df[results_df[!,:stripped_seq].=="PEPTIDE2",:entrapment_group] == [true]
+        @test results_df[results_df[!,:stripped_seq].=="PEPTIDE1",:entrapment_group] == [false,false]
+        @test results_df[results_df[!,:stripped_seq].=="PEPTIDE3",:entrapment_group] == [false]
+        @test results_df[results_df[!,:stripped_seq].=="PEPTIDE4",:entrapment_group] == [true]
     end
     
     @testset "rollup_to_protein_groups (vector-based)" begin

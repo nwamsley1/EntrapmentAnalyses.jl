@@ -24,5 +24,8 @@ using EntrapmentAnalyses
         # Analysis tests
         include("unit/analysis/test_qvalue_calculation.jl")
         include("unit/analysis/test_protein_analysis.jl")
+        
+        # Plotting tests
+        include("unit/plotting/test_visualization.jl")
     end
 end

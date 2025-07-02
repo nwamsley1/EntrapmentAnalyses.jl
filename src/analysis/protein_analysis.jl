@@ -48,9 +48,10 @@ function calculate_protein_qvalues_per_run!(protein_df::DataFrame)
         end
         
         println("Run $(run.file_name): N_d $Nd N_t $Nτ")
-        
+        println("qvals $qvals")
         # Monotonize and assign back
         monotonize!(qvals)
+        println("post monotonize! qvals $qvals")
         results[!, :Protein_Qvalue] = qvals
     end
     
