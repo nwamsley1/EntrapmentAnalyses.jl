@@ -10,7 +10,7 @@ const PARQUET_COLUMN_SPECS = [
 ]
 
 const LIBRARY_COLUMN_SPECS = [
-    (col=:PeptideSequence, default="", type=AbstractString, desc="empty string"),
+    (col=:PeptideSequence, default="", type=String, desc="empty string"),
     (col=:PrecursorCharge, default=0, type=UInt8, desc="0"),
     (col=:EntrapmentGroupId, default=0, type=Int, desc="0"),
     (col=:PrecursorIdx, default=0, type=Int, desc="0")
