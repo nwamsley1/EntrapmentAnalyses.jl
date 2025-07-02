@@ -14,8 +14,8 @@ This document outlines the comprehensive testing plan for the EntrapmentAnalyses
 - [x] Step 8: Test analysis/protein_analysis.jl
 - [x] Step 9: Test analysis/efdr_analysis.jl (skipped - placeholder file)
 - [x] Step 10: Test plotting/visualization.jl
-- [ ] Step 11: Integration tests for api.jl
-- [ ] Step 12: Final test suite validation
+- [x] Step 11: Integration tests for api.jl
+- [x] Step 12: Final test suite validation
 
 ## Test Structure
 ```

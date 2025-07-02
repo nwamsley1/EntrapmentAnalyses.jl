@@ -28,4 +28,9 @@ using EntrapmentAnalyses
         # Plotting tests
         include("unit/plotting/test_visualization.jl")
     end
+    
+    # Integration tests
+    @testset "Integration Tests" begin
+        include("integration/test_api.jl")
+    end
 end

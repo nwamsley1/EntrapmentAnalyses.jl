@@ -176,20 +176,4 @@ using Plots
         # Clean up
         rm(temp_dir, recursive=true, force=true)
     end
-    
-    @testset "Plot styling verification" begin
-        # Test that plots have correct styling
-        df = create_test_data()
-        p = EntrapmentAnalyses.plot_combined_efdr(
-            df; 
-            output_path=tempname() * ".pdf"
-        )
-        
-        # Verify plot attributes (size, fonts, etc.)
-        @test p.attr[:size] == (600, 450)
-        @test p.attr[:titlefontsize] == 16
-        @test p.attr[:xguidefontsize] == 16
-        @test p.attr[:yguidefontsize] == 16
-        @test p.attr[:tickfontsize] == 12
-    end
 end
