@@ -70,7 +70,7 @@ using EntrapmentAnalyses
     @testset "add_plex_complement_scores!" begin
         # Create test library
         lib_df = DataFrame(
-            PeptideSequence = ["PEPTIDE1", "PEPTIDE1", "PEPTIDE2", "PEPTIDE2"],
+            PeptideSequence = ["PEPTIDE1", "EDITPEP1", "PEPTIDE2", "EDITPEP2"],
             PrecursorCharge = [2, 2, 3, 3],
             EntrapmentGroupId = [0, 1, 0, 1],
             PrecursorIdx = [100, 100, 200, 200]
@@ -78,7 +78,7 @@ using EntrapmentAnalyses
         
         # Create test results
         results_df = DataFrame(
-            stripped_seq = ["PEPTIDE1", "PEPTIDE1", "PEPTIDE2", "PEPTIDE2"],
+            stripped_seq = ["PEPTIDE1", "EDITPEP1", "PEPTIDE2", "EDITPEP2"],
             z = [2, 2, 3, 3],
             PredVal = Float32[0.9, 0.8, 0.7, 0.6],
             channel = [0, 0, 0, 0],  # Same plex
@@ -108,7 +108,7 @@ using EntrapmentAnalyses
     @testset "add_plex_complement_scores! - multi-plex" begin
         # Test that same peptide in different plexes can have different complement scores
         lib_df = DataFrame(
-            PeptideSequence = ["PEPTIDE1", "PEPTIDE1"],
+            PeptideSequence = ["PEPTIDE1", "EDITPEP1"],
             PrecursorCharge = [2, 2],
             EntrapmentGroupId = [0, 1],
             PrecursorIdx = [100, 100]
@@ -116,7 +116,7 @@ using EntrapmentAnalyses
         
         # Same peptide pair in two different plexes
         results_df = DataFrame(
-            stripped_seq = ["PEPTIDE1", "PEPTIDE1", "PEPTIDE1", "PEPTIDE1"],
+            stripped_seq = ["PEPTIDE1", "EDITPEP1", "PEPTIDE1", "EDITPEP1"],
             z = [2, 2, 2, 2],
             PredVal = Float32[0.9, 0.8, 0.95, 0.85],  # Different scores in different plexes
             channel = [0, 0, 1, 1],  # Two different plexes
@@ -142,7 +142,7 @@ using EntrapmentAnalyses
     @testset "compute_pairing_vectors!" begin
         # Create test library
         lib_df = DataFrame(
-            PeptideSequence = ["PEPTIDE1", "PEPTIDE1", "PEPTIDE2", "PEPTIDE2"],
+            PeptideSequence = ["PEPTIDE1", "EDITPEP1", "PEPTIDE2", "EDITPEP2"],
             PrecursorCharge = [2, 2, 3, 3],
             EntrapmentGroupId = [0, 1, 0, 1],
             PrecursorIdx = [100, 100, 200, 200]
@@ -150,7 +150,7 @@ using EntrapmentAnalyses
         
         # Create test results
         results_df = DataFrame(
-            stripped_seq = ["PEPTIDE1", "PEPTIDE1", "PEPTIDE2", "PEPTIDE2"],
+            stripped_seq = ["PEPTIDE1", "EDITPEP1", "PEPTIDE2", "EDITPEP2"],
             z = [2, 2, 3, 3],
             PredVal = Float32[0.9, 0.8, 0.7, 0.6],
             channel = [0, 0, 0, 0],
