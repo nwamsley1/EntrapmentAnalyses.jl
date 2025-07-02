@@ -2,6 +2,7 @@ name = "EntrapmentAnalyses"
 uuid = "60062a3e-e55a-4920-8913-bf16cdadf465"
 authors = ["Nathan Wamsley <wamsleynathan@gmail.com>"]
 version = "0.1.0"
+license = "MIT"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
