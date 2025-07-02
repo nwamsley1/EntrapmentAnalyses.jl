@@ -10,7 +10,7 @@ const PARQUET_COLUMN_SPECS = [
 ]
 
 const LIBRARY_COLUMN_SPECS = [
-    (col=:PeptideSequence, default="", type=String, desc="empty string"),
+    (col=:PeptideSequence, default="", type=AbstractString, desc="empty string"),
     (col=:PrecursorCharge, default=0, type=UInt8, desc="0"),
     (col=:EntrapmentGroupId, default=0, type=Int, desc="0"),
     (col=:PrecursorIdx, default=0, type=Int, desc="0")
@@ -38,7 +38,7 @@ function handle_missing_values!(df::DataFrame, col::Symbol, default_value, targe
     
     n_missing = count(ismissing, df[!, col])
     
-    if n_missing > 0
+    if Missing <: eltype(df[!, col])
         @warn "Found $n_missing missing values in column '$col', replacing with $description"
         df[!, col] = [target_type(coalesce(x, default_value)) for x in df[!, col]]
     end
@@ -46,7 +46,8 @@ function handle_missing_values!(df::DataFrame, col::Symbol, default_value, targe
     # Validate final type
     actual_type = eltype(df[!, col])
     if actual_type != target_type && !(actual_type <: target_type)
-        error("Column $col has type $actual_type, expected $target_type")
+        df[!, col] = convert(Vector{target_type}, df[!, col])
+        #error("Column $col has type $actual_type, expected $target_type")
     end
     
     return n_missing

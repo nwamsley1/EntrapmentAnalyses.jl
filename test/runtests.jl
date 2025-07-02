@@ -10,4 +10,10 @@ using EntrapmentAnalyses
         # Verify package can be loaded
         @test isdefined(Main, :EntrapmentAnalyses)
     end
+    
+    # Unit tests
+    @testset "Unit Tests" begin
+        # IO tests
+        include("unit/io/test_data_loaders.jl")
+    end
 end

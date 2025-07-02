@@ -4,9 +4,9 @@
 This document outlines the comprehensive testing plan for the EntrapmentAnalyses.jl package. Tests will be organized to mirror the src/ directory structure and will be executed using Julia's built-in package testing system (`]test` or `Pkg.test()`).
 
 ## Progress Tracking
-- [ ] Step 1: Create dummy test and verify `]test` works
-- [ ] Step 2: Set up test directory structure
-- [ ] Step 3: Test io/data_loaders.jl
+- [x] Step 1: Create dummy test and verify `]test` works
+- [x] Step 2: Set up test directory structure
+- [x] Step 3: Test io/data_loaders.jl
 - [ ] Step 4: Test core/pairing.jl
 - [ ] Step 5: Test core/efdr_methods.jl
 - [ ] Step 6: Test core/scoring.jl
