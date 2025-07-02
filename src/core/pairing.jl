@@ -37,163 +37,6 @@ Base.hash(k::PlexPairKey, h::UInt) = hash((k.plex, k.pair_id), h)
 Base.:(==)(a::PlexPairKey, b::PlexPairKey) = a.plex == b.plex && a.pair_id == b.pair_id
 
 """
-    compute_pairing_vectors_old(lib_sequences, lib_charges, lib_entrap_groups, 
-                           lib_pair_ids, results_sequences, results_charges; 
-                           show_progress=true)
-
-[DEPRECATED] Old version of compute_pairing_vectors without plex-specific pairing.
-Core function to compute pairing information as vectors for efficient EFDR calculation.
-
-# Arguments
-- `lib_sequences`: Library peptide sequences
-- `lib_charges`: Library charge states
-- `lib_entrap_groups`: Entrapment group IDs (0 = original, >0 = entrapment)
-- `lib_pair_ids`: Pair identifiers linking originals to entrapments
-- `results_sequences`: Result peptide sequences
-- `results_charges`: Result charge states
-
-# Returns
-Named tuple with:
-- `is_original`: Bool vector indicating if each result is an original sequence
-- `pair_indices`: Int vector with pair IDs for each result
-- `entrap_labels`: Int vector with entrapment group IDs
-- `complement_indices`: Int vector with indices of paired sequences (-1 if no pair)
-"""
-function compute_pairing_vectors_old(
-    lib_sequences::AbstractVector{<:AbstractString},
-    lib_charges::AbstractVector{<:Integer},
-    lib_entrap_groups::AbstractVector{<:Integer},
-    lib_pair_ids::AbstractVector{<:Integer},
-    results_sequences::AbstractVector{String},
-    results_charges::AbstractVector{<:Real};
-    show_progress::Bool = true
-)
-    n_results = length(results_sequences)
-    n_lib = length(lib_sequences)
-    
-    # Validate input lengths
-    if length(lib_charges) != n_lib || length(lib_entrap_groups) != n_lib || length(lib_pair_ids) != n_lib
-        error("Library vectors must have the same length")
-    end
-    if length(results_charges) != n_results
-        error("Result sequence and charge vectors must have the same length")
-    end
-    
-    println("Computing pairing vectors for $n_results PSMs...")
-    
-    # Pre-allocate output vectors
-    is_original = Vector{Bool}(undef, n_results)
-    pair_indices = Vector{Int}(undef, n_results)
-    entrap_labels = Vector{Int}(undef, n_results)
-    complement_indices = fill(-1, n_results)
-    
-    # Build efficient lookup structure
-    lib_lookup = Dict{Tuple{String, Int}, Int}()
-    for i in 1:n_lib
-        key = (lib_sequences[i], lib_charges[i])
-        lib_lookup[key] = i
-    end
-    
-    # Fill basic pairing information
-    pb = show_progress ? ProgressBar(1:n_results) : (1:n_results)
-    if show_progress
-        set_description(pb, "Mapping sequences to library")
-    end
-    
-    for i in pb
-        key = (results_sequences[i], results_charges[i])
-        
-        if haskey(lib_lookup, key)
-            lib_idx = lib_lookup[key]
-            is_original[i] = lib_entrap_groups[lib_idx] == 0
-            pair_indices[i] = lib_pair_ids[lib_idx]
-            entrap_labels[i] = lib_entrap_groups[lib_idx]
-        else
-            error("Sequence not found in library: $(results_sequences[i]) with charge $(results_charges[i])")
-        end
-    end
-    
-    # Build pair lookup for complement finding
-    pair_groups = Dict{Int, Vector{Int}}()
-    for i in 1:n_results
-        pid = pair_indices[i]
-        if !haskey(pair_groups, pid)
-            pair_groups[pid] = Int[]
-        end
-        push!(pair_groups[pid], i)
-    end
-    
-    # Find complement indices
-    println("Finding complement sequences...")
-    pb2 = show_progress ? ProgressBar(1:n_results) : (1:n_results)
-    if show_progress
-        set_description(pb2, "Pairing complements")
-    end
-    
-    for i in pb2
-        pid = pair_indices[i]
-        group = pair_groups[pid]
-        
-        # Find complement within the same pair group
-        for j in group
-            if i != j && is_original[i] != is_original[j]
-                complement_indices[i] = j
-                break
-            end
-        end
-    end
-    
-    # Validate pairing
-    n_unpaired = sum(complement_indices .== -1)
-    if n_unpaired > 0
-        @warn "$n_unpaired sequences have no complement pair"
-    end
-    
-    return (
-        is_original = is_original,
-        pair_indices = pair_indices,
-        entrap_labels = entrap_labels,
-        complement_indices = complement_indices
-    )
-end
-
-"""
-    compute_pairing_vectors_old(library_df::DataFrame, results_df::DataFrame; kwargs...)
-
-[DEPRECATED] DataFrame wrapper for old compute_pairing_vectors that extracts the appropriate columns.
-
-# Keyword Arguments
-- `lib_seq_col`: Library sequence column (default: :PeptideSequence)
-- `lib_charge_col`: Library charge column (default: :PrecursorCharge)
-- `lib_entrap_col`: Library entrapment group column (default: :EntrapmentGroupId)
-- `lib_pair_col`: Library pair ID column (default: :PrecursorIdx)
-- `results_seq_col`: Results sequence column (default: :stripped_seq)
-- `results_charge_col`: Results charge column (default: :z)
-- `show_progress`: Show progress bars (default: true)
-"""
-function compute_pairing_vectors_old(
-    library_df::DataFrame,
-    results_df::DataFrame;
-    lib_seq_col::Symbol = :PeptideSequence,
-    lib_charge_col::Symbol = :PrecursorCharge,
-    lib_entrap_col::Symbol = :EntrapmentGroupId,
-    lib_pair_col::Symbol = :PrecursorIdx,
-    results_seq_col::Symbol = :stripped_seq,
-    results_charge_col::Symbol = :z,
-    show_progress::Bool = true
-)
-    return compute_pairing_vectors_old(
-        library_df[!, lib_seq_col],
-        library_df[!, lib_charge_col],
-        library_df[!, lib_entrap_col],
-        library_df[!, lib_pair_col],
-        results_df[!, results_seq_col],
-        results_df[!, results_charge_col];
-        show_progress = show_progress
-    )
-end
-
-"""
     get_complement_scores(scores::AbstractVector{T}, complement_indices::AbstractVector{Int}) where T
 
 [DEPRECATED] Extract complement scores based on complement indices.
@@ -388,13 +231,23 @@ function add_plex_complement_scores!(
 end
 
 """
-    compute_pairing_vectors(library_df::DataFrame, results_df::DataFrame; kwargs...)
+    compute_pairing_vectors!(library_df::DataFrame, results_df::DataFrame; kwargs...)
 
-Compute plex-aware pairing vectors with file and plex-specific complement scores.
+Add plex-aware pairing information directly to the results DataFrame.
+
+Modifies `results_df` by adding the following columns:
+- `:is_original` - Bool: true if peptide is original, false if entrapment
+- `:pair_id` - Int: ID linking original/entrapment pairs from library
+- `:entrap_label` - Int: 0 for original, 1 for entrapment (used in EFDR)
+- `:complement_score` - Float32: plex & file-specific score of paired peptide (-1 if no pair)
+- `:complement_indices` - Int: deprecated, always -1 (kept for compatibility)
+
+The complement scores respect both file and plex boundaries, meaning the same
+peptide in different plexes can have different complement scores.
 
 # Arguments
 - `library_df`: Library DataFrame with entrapment pairs
-- `results_df`: Results DataFrame with PSM data
+- `results_df`: Results DataFrame to modify (must have file_name and channel columns)
 
 # Keyword Arguments
 - `lib_seq_col`: Library sequence column (default: :PeptideSequence)
@@ -409,14 +262,9 @@ Compute plex-aware pairing vectors with file and plex-specific complement scores
 - `show_progress`: Show progress bars (default: true)
 
 # Returns
-Named tuple with:
-- `is_original`: Bool vector indicating if each result is an original sequence
-- `pair_indices`: Int vector with pair IDs for each result
-- `entrap_labels`: Int vector with entrapment group IDs
-- `complement_indices`: Int vector (deprecated, always -1)
-- `complement_scores`: Float32 vector with plex-specific complement scores
+- Modified `results_df` with new columns added
 """
-function compute_pairing_vectors(
+function compute_pairing_vectors!(
     library_df::DataFrame,
     results_df::DataFrame;
     lib_seq_col::Symbol = :PeptideSequence,
@@ -454,23 +302,14 @@ function compute_pairing_vectors(
         show_progress = show_progress
     )
     
-    # Step 3: Extract vectors for compatibility with existing code
-    n_results = nrow(results_df)
-    is_original_vec = results_df[!, :is_original]
-    pair_indices_vec = results_df[!, :pair_id]
-    complement_scores_vec = results_df[!, :complement_score]
+    # Step 3: Add remaining columns
+    println("Adding entrap_label column (0=original, 1=entrapment)...")
+    results_df[!, :entrap_label] = [orig ? 0 : 1 for orig in results_df[!, :is_original]]
     
-    # Create entrap_labels from is_original
-    entrap_labels_vec = [orig ? 0 : 1 for orig in is_original_vec]
+    # Add complement_indices for backward compatibility
+    results_df[!, :complement_indices] = fill(-1, nrow(results_df))
     
-    # For backward compatibility
-    complement_indices = fill(-1, n_results)
+    println("Added pairing columns: is_original, pair_id, entrap_label, complement_score, complement_indices")
     
-    return (
-        is_original = is_original_vec,
-        pair_indices = pair_indices_vec,
-        entrap_labels = entrap_labels_vec,
-        complement_indices = complement_indices,  # Deprecated
-        complement_scores = complement_scores_vec # File & plex specific!
-    )
+    return results_df
 end

@@ -224,11 +224,11 @@ function calculate_qvalues_per_file!(
     if hasproperty(df, file_col)
         gdf = groupby(df, file_col)
         n_files = length(gdf)
-        println("Processing $n_files files...")
+        @info "Processing $n_files files..."
         
         for (i, (key, file_df)) in enumerate(pairs(gdf))
             file_name = key[file_col]
-            println("  File $i/$n_files: $file_name")
+            @info "  File $i/$n_files: $file_name"
             
             # Calculate local q-values for this file
             calculate_qvalues!(file_df; score_col=score_col, sort_df=true)
@@ -244,7 +244,7 @@ function calculate_qvalues_per_file!(
         end
     else
         # Single file case
-        println("No file column found, treating as single file...")
+        @info "No file column found, treating as single file..."
         calculate_qvalues!(df; score_col=score_col, sort_df=true)
         calculate_global_qvalues!(df; score_col=score_col)
     end
