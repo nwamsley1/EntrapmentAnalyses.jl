@@ -1,5 +1,57 @@
 # Data loading functions for Parquet and TSV files
 
+# Column specifications for data validation and missing value handling
+const PARQUET_COLUMN_SPECS = [
+    (col=:stripped_seq, default="", type=String, desc="empty string"),
+    (col=:decoy, default=false, type=Bool, desc="false"),
+    (col=:z, default=0, type=UInt8, desc="0"),
+    (col=:PredVal, default=0.0f0, type=Float32, desc="0.0"),
+    (col=:file_name, default="", type=String, desc="empty string")
+]
+
+const LIBRARY_COLUMN_SPECS = [
+    (col=:PeptideSequence, default="", type=String, desc="empty string"),
+    (col=:PrecursorCharge, default=0, type=UInt8, desc="0"),
+    (col=:EntrapmentGroupId, default=0, type=Int, desc="0"),
+    (col=:PrecursorIdx, default=0, type=Int, desc="0")
+]
+
+"""
+    handle_missing_values!(df::DataFrame, col::Symbol, default_value, target_type::Type, description::String)
+
+Replace missing values in a DataFrame column with a default value and ensure correct type.
+
+# Arguments
+- `df`: DataFrame to modify
+- `col`: Column symbol to check
+- `default_value`: Value to use for missing entries
+- `target_type`: Type to convert to
+- `description`: Human-readable description of the default value
+
+# Returns
+- Number of missing values that were replaced
+"""
+function handle_missing_values!(df::DataFrame, col::Symbol, default_value, target_type::Type, description::String)
+    if !hasproperty(df, col)
+        error("Column $col not found in DataFrame")
+    end
+    
+    n_missing = count(ismissing, df[!, col])
+    
+    if n_missing > 0
+        @warn "Found $n_missing missing values in column '$col', replacing with $description"
+        df[!, col] = [target_type(coalesce(x, default_value)) for x in df[!, col]]
+    end
+    
+    # Validate final type
+    actual_type = eltype(df[!, col])
+    if actual_type != target_type && !(actual_type <: target_type)
+        error("Column $col has type $actual_type, expected $target_type")
+    end
+    
+    return n_missing
+end
+
 """
     load_parquet_results(filepaths::Vector{String})
 
@@ -29,6 +81,9 @@ function load_parquet_results(filepaths::Vector{String})
     dfs = DataFrame[]
     
     for (i, filepath) in enumerate(filepaths)
+        if !endswith(filepath, ".parquet")
+            continue
+        end
         println("Loading file $i/$(length(filepaths)): $(basename(filepath))")
         df = DataFrame(Dataset(filepath); copycols=true)
         push!(dfs, df)
@@ -38,7 +93,7 @@ function load_parquet_results(filepaths::Vector{String})
     results_df = vcat(dfs...)
     
     # Validate required columns
-    required_cols = [:stripped_seq, :z, :PredVal, :decoy]
+    required_cols = [:stripped_seq, :z, :PredVal, :decoy, :file_name]
     missing_cols = setdiff(required_cols, propertynames(results_df))
     
     if !isempty(missing_cols)
@@ -53,32 +108,23 @@ function load_parquet_results(filepaths::Vector{String})
     
     println("Loaded $(nrow(results_df)) total PSMs")
     
-    #Get rid of missing 
-    if any(ismissing.(results_df.stripped_seq))
-        @warn "Warning: Found missing stripped_seq values, replacing with empty string"
+    # Handle missing values for all required columns
+    println("\nChecking for missing values...")
+    total_missing = 0
+    for spec in PARQUET_COLUMN_SPECS
+        n_missing = handle_missing_values!(
+            results_df, 
+            spec.col, 
+            spec.default, 
+            spec.type, 
+            spec.desc
+        )
+        total_missing += n_missing
     end
-    # Replace missing stripped_seq with empty string
-    results_df.stripped_seq = [coalesce(x, "") for x in results_df.stripped_seq]
-    if any(ismissing.(results_df.decoy))
-        @warn "Warning: Found missing decoy values, replacing with empty string"
-    end
-    results_df.decoy = [coalesce(x, false) for x in results_df.decoy]
-    if any(ismissing.(results_df.z))
-        @warn "Warning: Found missing decoy values, replacing with empty string"
-    end
-    results_df.z = [UInt8(coalesce(x, 0)) for x in results_df.z]
-
-    if any(ismissing.(results_df.PredVal))
-        @warn "Warning: Found missing decoy values, replacing with empty string"
-    end
-    results_df.PredVal = [Float32(coalesce(x, 0)) for x in results_df.PredVal]
     
-    if any(ismissing.(results_df.file_name))
-        @warn "Warning: Found missing decoy values, replacing with empty string"
+    if total_missing > 0
+        println("Replaced $total_missing total missing values across all columns")
     end
-    results_df.file_name = [coalesce(x, "") for x in results_df.file_name]
-
-    eltype(results_df.stripped_seq) == String || error("stripped_seq must be String type")
     return results_df
 end
 
@@ -142,11 +188,23 @@ function load_spectral_library(filepath::String)
     
     println("Library loaded: $n_targets targets, $n_entrapments entrapments")
     
-    if any(ismissing.(library_df.PrecursorCharge))
-        @warn "Warning: Found missing decoy values, replacing with empty string"
+    # Handle missing values for all required columns
+    println("\nChecking for missing values in library...")
+    total_missing = 0
+    for spec in LIBRARY_COLUMN_SPECS
+        n_missing = handle_missing_values!(
+            library_df, 
+            spec.col, 
+            spec.default, 
+            spec.type, 
+            spec.desc
+        )
+        total_missing += n_missing
     end
-    library_df.PrecursorCharge = [UInt8(coalesce(x, 0)) for x in library_df.PrecursorCharge]
     
+    if total_missing > 0
+        println("Replaced $total_missing total missing values in library")
+    end
 
     return library_df
 end
