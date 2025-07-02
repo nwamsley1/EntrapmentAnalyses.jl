@@ -33,7 +33,14 @@ end
 - Calculate q-values within each group
 - Use these per-file q-values for EFDR calculations
 
-### 3. Data Format Expectations
+### 3. Plex-Specific Pairing Logic
+**IMPORTANT**: The pairing system now matches the notebook's behavior:
+- Complement scores are calculated per file AND per plex
+- The same peptide in different plexes can have different complement scores
+- Dictionary key is `(plex, pair_id)` not just `pair_id`
+- Process: Build global dictionaries from library → Process each file separately → Build plex score dictionary per file
+
+### 4. Data Format Expectations
 **PSM Results (Parquet):**
 - `stripped_seq`: Peptide sequence (String)
 - `z`: Charge state (numeric)
@@ -114,10 +121,10 @@ run_protein_efdr_analysis(parquet_files::Vector{String}, library_path::String; k
 src/
 ├── EntrapmentAnalyses.jl      # Main module, exports
 ├── io/
-│   └── data_loaders.jl        # Parquet/TSV loading
+│   └── data_loaders.jl        # Parquet/TSV loading with missing value handling
 ├── core/
-│   ├── pairing.jl             # Efficient pairing vectors
-│   ├── efdr_methods.jl        # EFDR calculations (FIXED)
+│   ├── pairing.jl             # Plex-aware pairing system with type definitions
+│   ├── efdr_methods.jl        # EFDR calculations (unchanged)
 │   └── scoring.jl             # Monotonization
 ├── analysis/
 │   ├── qvalue_calculation.jl  # Q-value calculations
@@ -125,7 +132,7 @@ src/
 │   └── efdr_analysis.jl       # Analysis coordination
 ├── plotting/
 │   └── visualization.jl        # Notebook-style plots
-└── api.jl                     # Public API functions
+└── api.jl                     # Public API functions (updated for plex pairing)
 ```
 
 ## Testing Guidelines
@@ -144,6 +151,27 @@ include("test/unit/test_paired_efdr_validation.jl")
 # Test protein analysis
 include("test/unit/test_protein_analysis.jl")
 ```
+
+## Key Implementation Functions
+
+### Pairing System
+1. **`init_entrapment_pairs_dict`**: Builds global dictionaries from library
+   - Returns `pair_dict` and `is_original_dict`
+   - Called once per analysis
+
+2. **`add_plex_complement_scores!`**: Adds plex-specific complement scores
+   - Processes each file separately
+   - Builds `plex_prec_to_scores` dictionary per file
+   - Adds `complement_score`, `is_original`, and `pair_id` columns
+
+3. **`compute_pairing_vectors`**: Main pairing function
+   - Calls the above functions
+   - Returns named tuple with vectors including `complement_scores`
+
+### Data Loading
+1. **`handle_missing_values!`**: Centralized missing value handling
+   - Shows accurate warnings with column names and counts
+   - Validates types after replacement
 
 ## Common Issues and Solutions
 
@@ -220,6 +248,20 @@ score_vec = group[!, score_col]::AbstractVector{Float32}
 - Changed all `Vector{T}` type assertions to `AbstractVector{T}`
 - Fixes TypeError when working with SubDataFrames from grouped operations
 - Allows handling both Vector and SubArray types from DataFrame column access
+
+### Plex-Specific Pairing Implementation
+- Implemented plex-aware pairing system that matches notebook behavior
+- Added new type definitions: `PeptideKey`, `PlexPairKey`, `ScorePair`
+- Created `compute_pairing_vectors` that returns plex-specific complement scores
+- Complement scores now respect both file and plex boundaries
+- Deprecated `get_complement_scores` in favor of pre-computed plex-specific values
+
+### Data Loader Improvements
+- Fixed incorrect warning messages in `load_parquet_results` and `load_spectral_library`
+- Added `handle_missing_values!` helper function to eliminate code duplication
+- Defined column specifications with proper types and descriptions
+- All columns now properly checked for missing values with accurate warnings
+- Shows count of missing values for better debugging
 
 ## Development Guidelines for Claude
 
