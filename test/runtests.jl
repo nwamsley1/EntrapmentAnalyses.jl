@@ -15,5 +15,8 @@ using EntrapmentAnalyses
     @testset "Unit Tests" begin
         # IO tests
         include("unit/io/test_data_loaders.jl")
+        
+        # Core tests
+        include("unit/core/test_pairing.jl")
     end
 end

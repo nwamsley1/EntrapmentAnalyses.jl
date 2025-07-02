@@ -7,7 +7,7 @@ This document outlines the comprehensive testing plan for the EntrapmentAnalyses
 - [x] Step 1: Create dummy test and verify `]test` works
 - [x] Step 2: Set up test directory structure
 - [x] Step 3: Test io/data_loaders.jl
-- [ ] Step 4: Test core/pairing.jl
+- [x] Step 4: Test core/pairing.jl
 - [ ] Step 5: Test core/efdr_methods.jl
 - [ ] Step 6: Test core/scoring.jl
 - [ ] Step 7: Test analysis/qvalue_calculation.jl
