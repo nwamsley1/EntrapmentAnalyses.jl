@@ -164,9 +164,10 @@ include("test/unit/test_protein_analysis.jl")
    - Builds `plex_prec_to_scores` dictionary per file
    - Adds `complement_score`, `is_original`, and `pair_id` columns
 
-3. **`compute_pairing_vectors`**: Main pairing function
+3. **`compute_pairing_vectors!`**: Main pairing function (mutating)
    - Calls the above functions
-   - Returns named tuple with vectors including `complement_scores`
+   - Modifies DataFrame directly by adding columns
+   - No longer returns pairing_info tuple
 
 ### Data Loading
 1. **`handle_missing_values!`**: Centralized missing value handling
@@ -262,6 +263,18 @@ score_vec = group[!, score_col]::AbstractVector{Float32}
 - Defined column specifications with proper types and descriptions
 - All columns now properly checked for missing values with accurate warnings
 - Shows count of missing values for better debugging
+
+### Pairing API Refactor
+- Changed `compute_pairing_vectors` to `compute_pairing_vectors!` (mutating function)
+- Function now modifies DataFrame directly by adding columns:
+  - `is_original`: Boolean flag (true=original, false=entrapment)
+  - `pair_id`: Links original/entrapment pairs from the library
+  - `entrap_label`: Integer label for EFDR calculation (0=original, 1=entrapment)
+  - `complement_score`: Plex-specific score of the paired peptide
+  - `complement_indices`: Deprecated, kept for compatibility
+- Removed `pairing_info` named tuple return value
+- Updated all API functions to use DataFrame columns directly
+- This simplifies the API and makes data flow more transparent
 
 ## Development Guidelines for Claude
 
