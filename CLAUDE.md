@@ -77,8 +77,30 @@ julia
 # From Julia REPL with activated environment
 ] test
 
-# Or run specific test files
-julia --project=. test/unit/test_efdr_methods.jl
+# The test suite includes:
+# - Unit tests for all modules in src/
+# - Tests for data loading, pairing, EFDR calculations
+# - Tests for q-value calculations and protein analysis
+# - Tests for visualization functions
+# - Edge case handling (empty data, missing values, etc.)
+```
+
+### Test Structure
+```
+test/
+├── runtests.jl              # Main test runner
+└── unit/                    # Unit tests mirroring src/ structure
+    ├── io/
+    │   └── test_data_loaders.jl
+    ├── core/
+    │   ├── test_pairing.jl
+    │   ├── test_efdr_methods.jl
+    │   └── test_scoring.jl
+    ├── analysis/
+    │   ├── test_qvalue_calculation.jl
+    │   └── test_protein_analysis.jl
+    └── plotting/
+        └── test_visualization.jl
 ```
 
 ### Development Workflow
@@ -137,20 +159,30 @@ src/
 
 ## Testing Guidelines
 
-### Key Test Areas
-1. **Paired EFDR Logic**: Test the fixed mutually exclusive conditions
-2. **Per-File Q-values**: Ensure q-values are calculated per file
-3. **Protein Rollup**: Verify best PSM selection per protein
-4. **Plot Styling**: Check exact RGB values and sizes
+The package now includes a comprehensive test suite that covers all major functionality. Tests are organized to mirror the source code structure for easy navigation.
 
-### Running Specific Tests
+### Running Tests
 ```julia
-# Test the critical paired EFDR fix
-include("test/unit/test_paired_efdr_validation.jl")
+# Run all tests
+] test
 
-# Test protein analysis
-include("test/unit/test_protein_analysis.jl")
+# Tests will automatically run for:
+# - Data loading functions
+# - Pairing system (including plex-aware complement scoring)
+# - EFDR calculations (both combined and paired)
+# - Q-value calculations (per-file and global)
+# - Protein analysis functions
+# - Monotonization
+# - Visualization functions
 ```
+
+### Test Coverage Areas
+1. **Data Loading**: Missing value handling, type conversions, column validation
+2. **Pairing System**: Plex-specific complement scores, pair identification
+3. **EFDR Methods**: Combined and paired calculations, edge cases
+4. **Q-values**: Per-file processing, monotonicity, validation
+5. **Protein Analysis**: Rollup logic, per-run calculations
+6. **Visualization**: Plot generation, report creation
 
 ## Key Implementation Functions
 
@@ -217,6 +249,26 @@ score_vec = group[!, score_col]::AbstractVector{Float32}
 2. **Pre-computed pairing**: Avoids dictionary lookups in main loops
 3. **Vector operations**: Use typed vectors instead of DataFrame columns in loops
 4. **Type stability**: Ensure all function arguments have known types
+
+## Test Suite Implementation (NEW)
+
+A comprehensive test suite has been added to ensure reliability and correctness:
+
+### Test Structure
+- Tests are organized in `test/unit/` mirroring the `src/` structure
+- Each module has corresponding test file(s)
+- Tests cover normal operation, edge cases, and error conditions
+
+### Key Test Features
+- **Data Loading Tests**: Validate missing value handling, type conversions
+- **Pairing Tests**: Verify plex-aware complement scoring, type definitions
+- **EFDR Tests**: Validate both combined and paired calculations
+- **Q-value Tests**: Check per-file processing, monotonicity
+- **Protein Tests**: Verify rollup logic and per-run calculations
+- **Visualization Tests**: Ensure plots generate without errors
+
+### Running Tests
+Simply use `] test` from the Julia REPL to run the full test suite.
 
 ## Recent Changes
 

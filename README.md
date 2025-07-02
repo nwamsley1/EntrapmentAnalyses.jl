@@ -1,6 +1,15 @@
 # EntrapmentAnalyses.jl
 
-A Julia module to calculate entrapment false-discovery proportion from JMod results 
+A Julia package for calculating entrapment-based false discovery rate (FDR) in proteomics data. Implements both combined and paired empirical FDR methods for precursor-level and protein-level analyses. 
+
+## Features
+
+- **Dual EFDR Methods**: Implements both combined and paired empirical FDR calculations
+- **Multi-level Analysis**: Supports both precursor-level and protein-level analyses
+- **Plex-Aware Pairing**: Handles multiplexed data with plex-specific complement scoring
+- **Per-File Processing**: Calculates q-values separately for each input file
+- **Comprehensive Visualization**: Generates publication-ready plots with exact notebook styling
+- **Detailed Reporting**: Creates markdown reports with analysis summaries and embedded plots
 
 ## Installation
 
@@ -14,113 +23,139 @@ Pkg.add(path="/path/to/EntrapmentAnalyses")
 ```julia
 using EntrapmentAnalyses
 
-# Example file paths
-parquet_file = "/Users/nathanwamsley/Data/May2025/kmd_jmod_search/9plex/05202025/all_IDs_filtered_01.parquet"
-library_file = "/Users/nathanwamsley/Data/May2025/spec_libs/parsed_libs/hs_tag6_predlib_JDRT_480_1000_2ng_shufentrap_noloss_051925_jmod.tsv"
+# Single file analysis
+parquet_file = "path/to/psm_results.parquet"
+library_file = "path/to/spectral_library.tsv"
 
-# Run precursor-level EFDR analysis (calculates both combined and paired by default)
-results = run_efdr_analysis([parquet_file], library_file; output_dir="efdr_output")
+# Run precursor-level EFDR analysis (calculates both combined and paired EFDR)
+results = run_efdr_analysis(parquet_file, library_file; output_dir="efdr_output")
 
 # Run protein-level EFDR analysis
-protein_results = run_protein_efdr_analysis([parquet_file], library_file; output_dir="protein_efdr_output")
+protein_results = run_protein_efdr_analysis(parquet_file, library_file; output_dir="protein_output")
 
-# Generate comprehensive report with all visualizations
-generate_analysis_report(results, "analysis_output")
-
-
-parquet_files = [ppath for ppath in readdir("/Users/nathanwamsley/Data/May2025/kmd_jmod_search/9plex/05202025", join=true) if endswith(ppath, ".parquet")]
-library_path = "/Users/nathanwamsley/Data/May2025/spec_libs/parsed_libs/hs_tag6_predlib_JDRT_480_1000_2ng_shufentrap_noloss_051925_jmod.tsv"
-output_dir =  "/Users/nathanwamsley/Desktop/efdr_9plex_paired_output"
-run_efdr_analysis(parquet_files, library_path, output_dir = output_dir)
-
-
-parquet_files = [ppath for ppath in readdir("/Users/nathanwamsley/Data/May2025/kmd_jmod_search/LF/attempt7", join=true) if endswith(ppath, ".parquet")]
-library_path = "/Users/nathanwamsley/Data/May2025/spec_libs/parsed_libs/JD_LF_HY_wshuffledentrap_paired_noloss_051925.tsv"
-output_dir =  "/Users/nathanwamsley/Desktop/efdr_lf_paired_output"
-run_efdr_analysis(parquet_files, library_path, output_dir = output_dir )
+# Multiple file analysis
+parquet_files = ["file1.parquet", "file2.parquet", "file3.parquet"]
+results = run_efdr_analysis(parquet_files, library_file; output_dir="multi_file_output")
 ```
 
 ## Key Functions
 
-### Data Loading
-- `load_parquet(filepath)` - Load PSM results from Parquet file
-- `load_spectral_library(filepath)` - Load spectral library from TSV file
+### Main Analysis Functions
+- `run_efdr_analysis(parquet_files, library_path; kwargs...)` - Precursor-level EFDR analysis
+- `run_protein_efdr_analysis(parquet_files, library_path; kwargs...)` - Protein-level rollup and analysis
 
-### Analysis Functions
-- `run_efdr_analysis(parquet_files, library_path)` - Precursor-level EFDR analysis
-- `run_protein_efdr_analysis(parquet_files, library_path)` - Protein-level rollup and analysis
+### Data Loading
+- `load_parquet_results(filepaths)` - Load and combine PSM results from Parquet files
+- `load_spectral_library(filepath)` - Load spectral library from TSV file
 
 ### Visualization
 - `plot_combined_efdr(df)` - Plot combined EFDR results
-- `plot_paired_efdr(df)` - Plot paired EFDR results
+- `plot_paired_efdr(df)` - Plot paired EFDR results  
 - `plot_efdr_comparison_both_methods(df)` - Compare both EFDR methods
-- `generate_analysis_report(df, output_dir)` - Generate comprehensive markdown report
+- `generate_analysis_report(df, output_dir)` - Generate comprehensive markdown report with all plots
 
 ## Data Format
 
 ### PSM Results (Parquet)
 Required columns:
-- `SpecId`: Spectrum identifier
-- `Label`: Multiplex channel label
-- `Peptide`: Peptide sequence
-- `Proteins`: Protein identifiers
-- `PredVal`: Prediction score
-- `ExpMass`: Experimental mass
-- `CalcMass`: Calculated mass
+- `stripped_seq`: Peptide sequence without modifications
+- `z`: Charge state
+- `PredVal`: Prediction score (higher is better)
+- `decoy`: Boolean indicating decoy status
+- `file_name`: Source file identifier
+- `protein`: Protein identifiers
+- `channel`: Multiplex channel (optional, will add dummy if missing)
 
 ### Spectral Library (TSV)
 Required columns:
-- `SpecId`: Spectrum identifier
-- `ModifiedPeptide`: Modified peptide sequence
+- `PeptideSequence`: Modified peptide sequence
 - `PrecursorCharge`: Charge state
-- `iRT`: Retention time
-- `PrecursorMz`: Precursor m/z
+- `EntrapmentGroupId`: 0 for originals, >0 for entrapments
+- `PrecursorIdx`: Unique pair identifier linking originals to entrapments
+
+## Output Files
+
+Each analysis run generates:
+- **TSV Results**: Complete results with EFDR columns added
+- **PDF/PNG Plots**: Visualization of FDR vs EFDR curves
+- **Markdown Report**: Comprehensive analysis summary with embedded plots
+
+### Output Columns Added
+- `local_qvalue`: Per-file q-values
+- `global_qvalue`: Global q-values (best per precursor)
+- `is_original`: Boolean indicating if peptide is original
+- `pair_id`: Links original/entrapment pairs
+- `complement_score`: Plex-specific score of paired peptide
+- `combined_entrapment_fdr`: Combined EFDR values
+- `precursor_entrapment_fdr` or `protein_group_entrapment_fdr`: Paired EFDR values
 
 ## Advanced Usage
-
-### Working with Multiple Files
-
-```julia
-# Process multiple Parquet files
-parquet_files = [
-    "file1.parquet",
-    "file2.parquet",
-    "file3.parquet"
-]
-results = run_efdr_analysis(parquet_files, library_file)
-```
 
 ### Custom Parameters
 
 ```julia
-# Run with custom parameters
+# Run with filtering and custom parameters
 results = run_efdr_analysis(
     parquet_files, 
     library_file;
     output_dir = "custom_output",
-    global_qval_threshold = 0.05,  # Filter at 5% global FDR
-    r_lib = 2.0,                   # Custom ratio parameter
-    show_progress = false          # Disable progress bars
+    global_qval_threshold = 0.05,     # Filter at 5% global FDR
+    local_qval_threshold = 0.01,      # Filter at 1% local FDR
+    r_lib = 2.0,                      # Library to real entrapment ratio
+    show_progress = false             # Disable progress bars
 )
 
-# Generate report with custom column names
+# Generate report with custom x-axis limit
 generate_analysis_report(
     results,
     "report_output";
-    combined_efdr_col = :combined_entrapment_fdr,
-    paired_efdr_col = :precursor_entrapment_fdr
+    xlim = (0, 0.1)  # Show FDR up to 10%
 )
+```
+
+## Testing
+
+The package includes a comprehensive test suite covering all major functionality:
+
+```julia
+# Run all tests
+] test
+
+# Tests cover:
+# - Data loading with missing value handling
+# - Plex-aware pairing system
+# - Combined and paired EFDR calculations
+# - Q-value calculations (per-file and global)
+# - Protein rollup and analysis
+# - Monotonization functions
+# - Visualization functions
 ```
 
 ## Algorithm Details
 
-The module implements entrapment-based FDR estimation following the Noble lab methodology (Wen et al. 2025):
+The module implements entrapment-based FDR estimation:
 
-- **Combined EFDR**: `(Nε × (1 + 1/r)) / (Nτ + Nε)`
-- **Paired EFDR**: `(Nε + Nεsτ + 2×Nετs) / (Nτ + Nε)`
+### Combined EFDR
+```
+EFDR = (Nε × (1 + 1/r)) / (Nτ + Nε)
+```
+
+### Paired EFDR
+```
+EFDR = (Nε + Nεsτ + 2×Nετs) / (Nτ + Nε)
+```
 
 Where:
 - `Nτ`: Number of targets above threshold
 - `Nε`: Number of entrapments above threshold  
 - `Nεsτ`: Entrapments winning with score ≥ threshold > paired target
 - `Nετs`: Entrapments winning with both ≥ threshold
+
+## Requirements
+
+- Julia 1.9+
+- Dependencies: DataFrames, CSV, Parquet, ProgressBars, Plots, Dates
+
+## License
+
+MIT License
