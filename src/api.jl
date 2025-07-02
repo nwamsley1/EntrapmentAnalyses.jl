@@ -6,6 +6,13 @@
 
 Run empirical FDR analysis at the precursor level.
 
+The function modifies the results DataFrame by adding pairing information columns:
+- `is_original`: Boolean indicating if peptide is original (true) or entrapment (false)
+- `pair_id`: Integer ID linking original/entrapment pairs
+- `entrap_label`: Integer label (0=original, 1=entrapment) for EFDR
+- `complement_score`: Plex-specific score of the paired peptide
+- `complement_indices`: Deprecated column for backward compatibility
+
 # Arguments
 - `parquet_files`: Vector of paths to Parquet files with PSM results
 - `library_path`: Path to TSV file with spectral library
@@ -86,16 +93,19 @@ function run_efdr_analysis(
     results_no_decoys = results_df[.!decoy_mask, :]
     println("Analyzing $(nrow(results_no_decoys)) target PSMs")
     
-    # Step 7: Compute pairing vectors
-    pairing_info = compute_pairing_vectors(library_df, results_no_decoys; 
-                                          show_progress=show_progress)
+    # Step 7: Add pairing information to dataframe
+    # This adds columns for tracking original/entrapment pairs and their scores:
+    # - is_original: Boolean flag (true=original, false=entrapment)
+    # - pair_id: Links original/entrapment pairs from the library
+    # - entrap_label: Integer label for EFDR calculation (0=original, 1=entrapment)
+    # - complement_score: Plex-specific score of the paired peptide
+    # - complement_indices: Deprecated, kept for compatibility
+    compute_pairing_vectors!(library_df, results_no_decoys; 
+                           show_progress=show_progress)
     
     # Step 8: Initialize EFDR columns
     results_no_decoys[!, :combined_entrapment_fdr] = zeros(Float32, nrow(results_no_decoys))
     results_no_decoys[!, :precursor_entrapment_fdr] = zeros(Float32, nrow(results_no_decoys))
-    
-    # Step 9: Get entrapment labels from pairing info
-    entrap_labels = [orig ? 0 : 1 for orig in pairing_info.is_original]
     
     # Step 10: Group by run and calculate both EFDR methods
     if hasproperty(results_no_decoys, :file_name)
@@ -112,7 +122,7 @@ function run_efdr_analysis(
             # Extract data for this run
             scores = run_df[!, score_col]::AbstractVector{Float32}
             qvals = run_df.local_qvalue::AbstractVector{Float32}
-            run_entrap_labels = entrap_labels[run_indices]
+            run_entrap_labels = run_df[!, :entrap_label]
             
             # Calculate combined EFDR for this run
             combined_efdr_values = calculate_combined_efdr(
@@ -132,13 +142,13 @@ function run_efdr_analysis(
             results_no_decoys[run_indices, :combined_entrapment_fdr] = Float32.(combined_efdr_values)
             
             # Get complement scores for paired EFDR (now pre-computed and plex-specific)
-            complement_scores = pairing_info.complement_scores[run_indices]
+            complement_scores = run_df[!, :complement_score]
             
             # Calculate paired EFDR
             paired_efdr_values = calculate_paired_efdr(
                 Float64.(scores),
                 Float64.(complement_scores),
-                pairing_info.is_original[run_indices],
+                run_df[!, :is_original],
                 Float64.(qvals);
                 r = r_lib,
                 show_progress = show_progress
@@ -166,7 +176,7 @@ function run_efdr_analysis(
         # Calculate combined EFDR
         combined_efdr_values = calculate_combined_efdr(
             Float64.(scores),
-            entrap_labels,
+            results_no_decoys[!, :entrap_label],
             Float64.(qvals);
             r = r_lib,
             show_progress = show_progress
@@ -177,8 +187,8 @@ function run_efdr_analysis(
         # Calculate paired EFDR (using pre-computed plex-specific complement scores)
         paired_efdr_values = calculate_paired_efdr(
             Float64.(scores),
-            Float64.(pairing_info.complement_scores),
-            pairing_info.is_original,
+            Float64.(results_no_decoys[!, :complement_score]),
+            results_no_decoys[!, :is_original],
             Float64.(qvals);
             r = r_lib,
             show_progress = show_progress
@@ -222,6 +232,13 @@ end
     run_protein_efdr_analysis(parquet_files::Vector{String}, library_path::String; kwargs...)
 
 Run empirical FDR analysis at the protein level following the notebook implementation.
+
+The function modifies the protein DataFrame by adding pairing information columns:
+- `is_original`: Boolean indicating if protein is original (true) or entrapment (false)
+- `pair_id`: Integer ID linking original/entrapment pairs
+- `entrap_label`: Integer label (0=original, 1=entrapment) for EFDR
+- `complement_score`: Plex-specific score of the paired protein
+- `complement_indices`: Deprecated column for backward compatibility
 
 # Arguments
 - `parquet_files`: Vector of paths to Parquet files with PSM results
@@ -306,16 +323,19 @@ function run_protein_efdr_analysis(
     protein_no_decoys = protein_df[.!decoy_mask, :]
     println("Analyzing $(nrow(protein_no_decoys)) target protein groups")
     
-    # Step 8: Compute pairing vectors for proteins
-    pairing_info = compute_pairing_vectors(library_df, protein_no_decoys; 
-                                          show_progress=show_progress)
+    # Step 8: Add pairing information to protein dataframe
+    # This adds columns for tracking original/entrapment pairs and their scores:
+    # - is_original: Boolean flag (true=original, false=entrapment)
+    # - pair_id: Links original/entrapment pairs from the library
+    # - entrap_label: Integer label for EFDR calculation (0=original, 1=entrapment)
+    # - complement_score: Plex-specific score of the paired peptide
+    # - complement_indices: Deprecated, kept for compatibility
+    compute_pairing_vectors!(library_df, protein_no_decoys; 
+                           show_progress=show_progress)
     
     # Step 9: Initialize EFDR columns
     protein_no_decoys[!, :combined_protein_fdr] = zeros(Float32, nrow(protein_no_decoys))
     protein_no_decoys[!, :protein_group_entrapment_fdr] = zeros(Float32, nrow(protein_no_decoys))
-    
-    # Step 10: Get entrapment labels from pairing info
-    entrap_labels = [orig ? 0 : 1 for orig in pairing_info.is_original]
     
     # Step 11: Group by run and calculate both EFDR methods
     if hasproperty(protein_no_decoys, :file_name)
@@ -332,7 +352,7 @@ function run_protein_efdr_analysis(
             # Extract data for this run
             scores = run_df[!, score_col]::AbstractVector{Float32}
             qvals = run_df.Protein_Qvalue::AbstractVector{Float32}
-            run_entrap_labels = entrap_labels[run_indices]
+            run_entrap_labels = run_df[!, :entrap_label]
             
             # Calculate combined EFDR for this run
             combined_efdr_values = calculate_combined_efdr(
@@ -352,13 +372,13 @@ function run_protein_efdr_analysis(
             protein_no_decoys[run_indices, :combined_protein_fdr] = Float32.(combined_efdr_values)
             
             # Get complement scores for paired EFDR (now pre-computed and plex-specific)
-            complement_scores = pairing_info.complement_scores[run_indices]
+            complement_scores = run_df[!, :complement_score]
             
             # Calculate paired EFDR
             paired_efdr_values = calculate_paired_efdr(
                 Float64.(scores),
                 Float64.(complement_scores),
-                pairing_info.is_original[run_indices],
+                run_df[!, :is_original],
                 Float64.(qvals);
                 r = r_lib,
                 show_progress = show_progress
@@ -386,7 +406,7 @@ function run_protein_efdr_analysis(
         # Calculate combined EFDR
         combined_efdr_values = calculate_combined_efdr(
             Float64.(scores),
-            entrap_labels,
+            protein_no_decoys[!, :entrap_label],
             Float64.(qvals);
             r = r_lib,
             show_progress = show_progress
@@ -397,8 +417,8 @@ function run_protein_efdr_analysis(
         # Calculate paired EFDR (using pre-computed plex-specific complement scores)
         paired_efdr_values = calculate_paired_efdr(
             Float64.(scores),
-            Float64.(pairing_info.complement_scores),
-            pairing_info.is_original,
+            Float64.(protein_no_decoys[!, :complement_score]),
+            protein_no_decoys[!, :is_original],
             Float64.(qvals);
             r = r_lib,
             show_progress = show_progress
