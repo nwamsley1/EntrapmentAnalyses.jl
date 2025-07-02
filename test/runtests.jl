@@ -23,5 +23,6 @@ using EntrapmentAnalyses
         
         # Analysis tests
         include("unit/analysis/test_qvalue_calculation.jl")
+        include("unit/analysis/test_protein_analysis.jl")
     end
 end

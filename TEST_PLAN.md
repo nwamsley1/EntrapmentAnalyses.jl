@@ -11,7 +11,7 @@ This document outlines the comprehensive testing plan for the EntrapmentAnalyses
 - [x] Step 5: Test core/efdr_methods.jl
 - [x] Step 6: Test core/scoring.jl
 - [x] Step 7: Test analysis/qvalue_calculation.jl
-- [ ] Step 8: Test analysis/protein_analysis.jl
+- [x] Step 8: Test analysis/protein_analysis.jl
 - [ ] Step 9: Test analysis/efdr_analysis.jl
 - [ ] Step 10: Test plotting/visualization.jl
 - [ ] Step 11: Integration tests for api.jl
