@@ -14,7 +14,7 @@ This document outlines the comprehensive testing plan for the EntrapmentAnalyses
 - [x] Step 8: Test analysis/protein_analysis.jl
 - [x] Step 9: Test analysis/efdr_analysis.jl (skipped - placeholder file)
 - [x] Step 10: Test plotting/visualization.jl
-- [x] Step 11: Integration tests for api.jl
+- [x] Step 11: Integration tests for api.jl (removed per user request)
 - [x] Step 12: Final test suite validation
 
 ## Test Structure
@@ -34,8 +34,6 @@ test/
 │   │   └── test_efdr_analysis.jl
 │   └── plotting/
 │       └── test_visualization.jl
-├── integration/             # Integration tests
-│   └── test_api.jl
 └── test_data/              # Test fixtures
     ├── sample_psm.parquet
     ├── sample_library.tsv
