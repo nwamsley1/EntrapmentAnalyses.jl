@@ -1,13 +1,14 @@
 name = "EntrapmentAnalyses"
 uuid = "60062a3e-e55a-4920-8913-bf16cdadf465"
+license = "MIT"
 authors = ["Nathan Wamsley <wamsleynathan@gmail.com>"]
 version = "0.1.0"
-license = "MIT"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Parquet2 = "98572fba-bba0-415d-956f-fa77e587d26d"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
