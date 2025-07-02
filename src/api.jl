@@ -108,96 +108,67 @@ function run_efdr_analysis(
     results_no_decoys[!, :precursor_entrapment_fdr] = zeros(Float32, nrow(results_no_decoys))
     
     # Step 10: Group by run and calculate both EFDR methods
-    if hasproperty(results_no_decoys, :file_name)
-        # Add row indices for tracking
-        results_no_decoys[!, :_row_idx] = 1:nrow(results_no_decoys)
-        gdf = groupby(results_no_decoys, :file_name)
+    if !hasproperty(results_no_decoys, :file_name)
+        results_no_decoys[!, :file_name] = "single_file"
+    end
+    # Add row indices for tracking
+    results_no_decoys[!, :_row_idx] = 1:nrow(results_no_decoys)
+    gdf = groupby(results_no_decoys, :file_name)
+    
+    for (key, run_df) in pairs(gdf)
+        println("\nProcessing run: $(key.file_name)")
         
-        for (key, run_df) in pairs(gdf)
-            println("\nProcessing run: $(key.file_name)")
-            
-            # Get indices for this run in the original results_no_decoys
-            run_indices = run_df._row_idx
-            
-            # Extract data for this run
-            scores = run_df[!, score_col]::AbstractVector{Float32}
-            qvals = run_df.local_qvalue::AbstractVector{Float32}
-            run_entrap_labels = run_df[!, :entrap_label]
-            
-            # Calculate combined EFDR for this run
-            combined_efdr_values = calculate_combined_efdr(
-                Float64.(scores),
-                run_entrap_labels,
-                Float64.(qvals);
-                r = r_lib,
-                show_progress = show_progress
-            )
-            monotonize!(combined_efdr_values)
-            
-            # Debug: Check combined EFDR
-            max_combined = maximum(combined_efdr_values)
-            println("  Max combined EFDR for this run: $max_combined")
-            
-            # Store combined EFDR results
-            results_no_decoys[run_indices, :combined_entrapment_fdr] = Float32.(combined_efdr_values)
-            
-            # Get complement scores for paired EFDR (now pre-computed and plex-specific)
-            complement_scores = run_df[!, :complement_score]
-            
-            # Calculate paired EFDR
-            paired_efdr_values = calculate_paired_efdr(
-                Float64.(scores),
-                Float64.(complement_scores),
-                run_df[!, :is_original],
-                Float64.(qvals);
-                r = r_lib,
-                show_progress = show_progress
-            )
-            
-            monotonize!(paired_efdr_values)
-            
-            # Debug: Check paired EFDR
-            max_paired = maximum(paired_efdr_values)
-            println("  Max paired EFDR for this run: $max_paired")
-            
-            # Store paired EFDR results
-            results_no_decoys[run_indices, :precursor_entrapment_fdr] = Float32.(paired_efdr_values)
-        end
+        # Get indices for this run in the original results_no_decoys
+        run_indices = run_df._row_idx
         
-        # Remove temporary column
-        select!(results_no_decoys, Not(:_row_idx))
-    else
-        # Single file case
-        println("Processing single file...")
+        # Extract data for this run
+        scores = run_df[!, score_col]::AbstractVector{Float32}
+        qvals = run_df.local_qvalue::AbstractVector{Float32}
+        run_entrap_labels = run_df[!, :entrap_label]
         
-        scores = results_no_decoys[!, score_col]::AbstractVector{Float32}
-        qvals = results_no_decoys.local_qvalue::AbstractVector{Float32}
-        
-        # Calculate combined EFDR
+        # Calculate combined EFDR for this run
         combined_efdr_values = calculate_combined_efdr(
             Float64.(scores),
-            results_no_decoys[!, :entrap_label],
+            run_entrap_labels,
             Float64.(qvals);
             r = r_lib,
             show_progress = show_progress
         )
         monotonize!(combined_efdr_values)
-        results_no_decoys[!, :combined_entrapment_fdr] = Float32.(combined_efdr_values)
         
-        # Calculate paired EFDR (using pre-computed plex-specific complement scores)
+        # Debug: Check combined EFDR
+        max_combined = maximum(combined_efdr_values)
+        println("  Max combined EFDR for this run: $max_combined")
+        
+        # Store combined EFDR results
+        results_no_decoys[run_indices, :combined_entrapment_fdr] = Float32.(combined_efdr_values)
+        
+        # Get complement scores for paired EFDR (now pre-computed and plex-specific)
+        complement_scores = run_df[!, :complement_score]
+        
+        # Calculate paired EFDR
         paired_efdr_values = calculate_paired_efdr(
             Float64.(scores),
-            Float64.(results_no_decoys[!, :complement_score]),
-            results_no_decoys[!, :is_original],
+            Float64.(complement_scores),
+            run_df[!, :is_original],
             Float64.(qvals);
             r = r_lib,
             show_progress = show_progress
         )
         
         monotonize!(paired_efdr_values)
-        results_no_decoys[!, :precursor_entrapment_fdr] = Float32.(paired_efdr_values)
+        
+        # Debug: Check paired EFDR
+        max_paired = maximum(paired_efdr_values)
+        println("  Max paired EFDR for this run: $max_paired")
+        
+        # Store paired EFDR results
+        results_no_decoys[run_indices, :precursor_entrapment_fdr] = Float32.(paired_efdr_values)
     end
     
+    # Remove temporary column
+    select!(results_no_decoys, Not(:_row_idx))
+
     # Step 11: Generate outputs
     output_file = joinpath(output_dir, "precursor_entrapment_results.tsv")
     CSV.write(output_file, results_no_decoys, delim='\t')
@@ -338,95 +309,66 @@ function run_protein_efdr_analysis(
     protein_no_decoys[!, :protein_group_entrapment_fdr] = zeros(Float32, nrow(protein_no_decoys))
     
     # Step 11: Group by run and calculate both EFDR methods
-    if hasproperty(protein_no_decoys, :file_name)
-        # Add row indices for tracking
-        protein_no_decoys[!, :_row_idx] = 1:nrow(protein_no_decoys)
-        gdf = groupby(protein_no_decoys, :file_name)
+    if !hasproperty(protein_no_decoys, :file_name)
+        protein_no_decoys[!, :file_name] = "single_file"
+    end
+    # Add row indices for tracking
+    protein_no_decoys[!, :_row_idx] = 1:nrow(protein_no_decoys)
+    gdf = groupby(protein_no_decoys, :file_name)
+    
+    for (key, run_df) in pairs(gdf)
+        println("\nProcessing protein run: $(key.file_name)")
         
-        for (key, run_df) in pairs(gdf)
-            println("\nProcessing protein run: $(key.file_name)")
-            
-            # Get indices for this run in the original protein_no_decoys
-            run_indices = run_df._row_idx
-            
-            # Extract data for this run
-            scores = run_df[!, score_col]::AbstractVector{Float32}
-            qvals = run_df.Protein_Qvalue::AbstractVector{Float32}
-            run_entrap_labels = run_df[!, :entrap_label]
-            
-            # Calculate combined EFDR for this run
-            combined_efdr_values = calculate_combined_efdr(
-                Float64.(scores),
-                run_entrap_labels,
-                Float64.(qvals);
-                r = r_lib,
-                show_progress = show_progress
-            )
-            monotonize!(combined_efdr_values)
-            
-            # Debug: Check combined EFDR
-            max_combined = maximum(combined_efdr_values)
-            println("  Max combined protein EFDR for this run: $max_combined")
-            
-            # Store combined EFDR results
-            protein_no_decoys[run_indices, :combined_protein_fdr] = Float32.(combined_efdr_values)
-            
-            # Get complement scores for paired EFDR (now pre-computed and plex-specific)
-            complement_scores = run_df[!, :complement_score]
-            
-            # Calculate paired EFDR
-            paired_efdr_values = calculate_paired_efdr(
-                Float64.(scores),
-                Float64.(complement_scores),
-                run_df[!, :is_original],
-                Float64.(qvals);
-                r = r_lib,
-                show_progress = show_progress
-            )
-            
-            monotonize!(paired_efdr_values)
-            
-            # Debug: Check paired EFDR
-            max_paired = maximum(paired_efdr_values)
-            println("  Max paired protein EFDR for this run: $max_paired")
-            
-            # Store paired EFDR results
-            protein_no_decoys[run_indices, :protein_group_entrapment_fdr] = Float32.(paired_efdr_values)
-        end
+        # Get indices for this run in the original protein_no_decoys
+        run_indices = run_df._row_idx
         
-        # Remove temporary column
-        select!(protein_no_decoys, Not(:_row_idx))
-    else
-        # Single file case
-        println("Processing single protein file...")
+        # Extract data for this run
+        scores = run_df[!, score_col]::AbstractVector{Float32}
+        qvals = run_df.Protein_Qvalue::AbstractVector{Float32}
+        run_entrap_labels = run_df[!, :entrap_label]
         
-        scores = protein_no_decoys[!, score_col]::AbstractVector{Float32}
-        qvals = protein_no_decoys.Protein_Qvalue::AbstractVector{Float32}
-        
-        # Calculate combined EFDR
+        # Calculate combined EFDR for this run
         combined_efdr_values = calculate_combined_efdr(
             Float64.(scores),
-            protein_no_decoys[!, :entrap_label],
+            run_entrap_labels,
             Float64.(qvals);
             r = r_lib,
             show_progress = show_progress
         )
         monotonize!(combined_efdr_values)
-        protein_no_decoys[!, :combined_protein_fdr] = Float32.(combined_efdr_values)
         
-        # Calculate paired EFDR (using pre-computed plex-specific complement scores)
+        # Debug: Check combined EFDR
+        max_combined = maximum(combined_efdr_values)
+        println("  Max combined protein EFDR for this run: $max_combined")
+        
+        # Store combined EFDR results
+        protein_no_decoys[run_indices, :combined_protein_fdr] = Float32.(combined_efdr_values)
+        
+        # Get complement scores for paired EFDR (now pre-computed and plex-specific)
+        complement_scores = run_df[!, :complement_score]
+        
+        # Calculate paired EFDR
         paired_efdr_values = calculate_paired_efdr(
             Float64.(scores),
-            Float64.(protein_no_decoys[!, :complement_score]),
-            protein_no_decoys[!, :is_original],
+            Float64.(complement_scores),
+            run_df[!, :is_original],
             Float64.(qvals);
             r = r_lib,
             show_progress = show_progress
         )
         
         monotonize!(paired_efdr_values)
-        protein_no_decoys[!, :protein_group_entrapment_fdr] = Float32.(paired_efdr_values)
+        
+        # Debug: Check paired EFDR
+        max_paired = maximum(paired_efdr_values)
+        println("  Max paired protein EFDR for this run: $max_paired")
+        
+        # Store paired EFDR results
+        protein_no_decoys[run_indices, :protein_group_entrapment_fdr] = Float32.(paired_efdr_values)
     end
+    
+    # Remove temporary column
+    select!(protein_no_decoys, Not(:_row_idx))
     
     # Step 12: Generate outputs
     output_file = joinpath(output_dir, "protein_group_entrapment.tsv")

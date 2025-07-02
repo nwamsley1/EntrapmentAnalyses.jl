@@ -276,6 +276,12 @@ score_vec = group[!, score_col]::AbstractVector{Float32}
 - Updated all API functions to use DataFrame columns directly
 - This simplifies the API and makes data flow more transparent
 
+### Unified File Processing Logic
+- Removed separate single-file and multi-file code paths in API functions
+- When no `file_name` column exists, adds dummy "single_file" value
+- Uses the same grouped DataFrame processing for both single and multiple files
+- Eliminates code duplication and simplifies maintenance
+
 ## Development Guidelines for Claude
 
 ### Key Instructions
