@@ -4,19 +4,17 @@ This guide provides comprehensive instructions for using EntrapmentAnalyses.jl i
 
 ## Installation
 
-EntrapmentAnalyses.jl requires Julia 1.9 or later. Install the package using Julia's package manager:
-
+EntrapmentAnalyses.jl requires Julia 1.0 or later. Navigate to the EntrapmentAnalyses directory. Use `]` to enter Pkg mode. 
 ```julia
-using Pkg
-Pkg.add("EntrapmentAnalyses")
+
+(@v1.11) pkg> activate .
+  Activating project at `~/Projects/EntrapmentAnalysesJmod/EntrapmentAnalyses`
+
+julia> using Revise, EntrapmentAnalyses
+Precompiling EntrapmentAnalyses...
+  1 dependency successfully precompiled in 6 seconds. 273 already precompiled.
 ```
 
-For development work:
-
-```julia
-using Pkg
-Pkg.develop(path="path/to/EntrapmentAnalyses.jl")
-```
 
 ## Input Data Requirements
 
@@ -97,19 +95,6 @@ results = run_efdr_analysis(
     parquet_files,
     library_file;
     efdr_method=:both
-)
-```
-
-### Performance Optimization
-
-For large datasets, you can optimize performance by adjusting the local q-value threshold:
-
-```julia
-# Reduce computation by filtering at 1% local q-value
-results = run_efdr_analysis(
-    parquet_files,
-    library_file;
-    local_qval_threshold=0.01  # Default is 0.05
 )
 ```
 

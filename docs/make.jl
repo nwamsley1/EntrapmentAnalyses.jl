@@ -20,6 +20,7 @@ makedocs(;
         ],
         "API Reference" => "api.md",
     ],
+    warnonly = [:missing_docs, :docs_block],
 )
 
 deploydocs(;

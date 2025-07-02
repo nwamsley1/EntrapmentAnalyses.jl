@@ -17,10 +17,15 @@ A Julia package for calculating entrapment-based false discovery rate (FDR) in p
 - **Detailed Reporting**: Creates markdown reports with analysis summaries and embedded plots
 
 ## Installation
-
+Navigate to the EntrapmentAnalyses directory. Use `]` to enter Pkg mode. 
 ```julia
-using Pkg
-Pkg.add(path="/path/to/EntrapmentAnalyses")
+
+(@v1.11) pkg> activate .
+  Activating project at `~/Projects/EntrapmentAnalysesJmod/EntrapmentAnalyses`
+
+julia> using Revise, EntrapmentAnalyses
+Precompiling EntrapmentAnalyses...
+  1 dependency successfully precompiled in 6 seconds. 273 already precompiled.
 ```
 
 ## Quick Start
@@ -158,7 +163,7 @@ Where:
 
 ## Requirements
 
-- Julia 1.9+
+- Julia 1.10+
 - Dependencies: DataFrames, CSV, Parquet, ProgressBars, Plots, Dates
 
 ## License

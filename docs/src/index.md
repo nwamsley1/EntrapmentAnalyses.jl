@@ -18,11 +18,17 @@ EntrapmentAnalyses.jl is a Julia package for entrapment-based false discovery ra
 - **Performance**: Optimized for large-scale proteomics datasets
 
 ## Installation
-
+Navigate to the EntrapmentAnalyses directory. Use `]` to enter Pkg mode. 
 ```julia
-using Pkg
-Pkg.add("EntrapmentAnalyses")
+
+(@v1.11) pkg> activate .
+  Activating project at `~/Projects/EntrapmentAnalysesJmod/EntrapmentAnalyses`
+
+julia> using Revise, EntrapmentAnalyses
+Precompiling EntrapmentAnalyses...
+  1 dependency successfully precompiled in 6 seconds. 273 already precompiled.
 ```
+
 
 ## Quick Start
 

@@ -18,8 +18,37 @@ run_protein_efdr_analysis
 Functions for loading input data:
 
 ```@docs
-load_parquet_results
+load_parquet
 load_spectral_library
+```
+
+## Analysis Functions
+
+Functions for different types of analyses:
+
+```@docs
+analyze_combined_efdr
+analyze_paired_efdr
+analyze_proteins
+```
+
+## EFDR Calculation
+
+Core EFDR calculation method:
+
+```@docs
+calculate_efdr
+```
+
+## Q-value Calculation
+
+Functions for q-value computation:
+
+```@docs
+calculate_qvalues!
+calculate_qvalues_per_file!
+calculate_global_qvalues!
+monotonize!
 ```
 
 ## Pairing System
@@ -28,36 +57,6 @@ Functions for computing peptide pairings:
 
 ```@docs
 compute_pairing_vectors!
-init_entrapment_pairs_dict
-add_plex_complement_scores!
-```
-
-## EFDR Calculation
-
-Core EFDR calculation methods:
-
-```@docs
-calculate_combined_efdr
-calculate_paired_efdr
-```
-
-## Q-value Calculation
-
-Functions for q-value computation:
-
-```@docs
-calculate_qvalues_per_file!
-calculate_qvalues!
-monotonize!
-```
-
-## Protein Analysis
-
-Functions for protein-level analysis:
-
-```@docs
-perform_protein_rollup
-calculate_protein_efdr_per_run
 ```
 
 ## Visualization
@@ -65,18 +64,12 @@ calculate_protein_efdr_per_run
 Functions for generating plots and reports:
 
 ```@docs
-plot_efdr_results
 plot_efdr_comparison
+plot_protein_comparison
+plot_combined_efdr
+plot_paired_efdr
+plot_efdr_comparison_both_methods
 generate_analysis_report
-```
-
-## Utility Functions
-
-Helper functions and utilities:
-
-```@docs
-handle_missing_values!
-strip_modifications
 ```
 
 ## Type Definitions
@@ -84,9 +77,9 @@ strip_modifications
 Key types used throughout the package:
 
 ```@docs
-PeptideKey
-PlexPairKey
-ScorePair
+EFDRMethod
+CombinedEFDR
+PairedEFDR
 ```
 
 ## Index

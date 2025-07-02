@@ -32,7 +32,7 @@ export EFDRMethod, CombinedEFDR, PairedEFDR
 
 # Export utility functions
 export calculate_efdr, monotonize!
-export compute_pairing_vectors
+export compute_pairing_vectors, compute_pairing_vectors!
 export calculate_qvalues!, calculate_global_qvalues!, calculate_qvalues_per_file!
 
 # Export plotting functions
