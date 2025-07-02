@@ -20,5 +20,8 @@ using EntrapmentAnalyses
         include("unit/core/test_pairing.jl")
         include("unit/core/test_efdr_methods.jl")
         include("unit/core/test_scoring.jl")
+        
+        # Analysis tests
+        include("unit/analysis/test_qvalue_calculation.jl")
     end
 end
