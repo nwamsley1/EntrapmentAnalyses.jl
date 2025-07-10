@@ -17,20 +17,16 @@ function plot_precursor_efdr_comparison(
     fdr_values = df[!, fdr_col]::AbstractVector{Float32}
     efdr_values = df[!, efdr_col]::AbstractVector{Float32}
     
-    # Determine y-axis range from data
-    mask = fdr_values .<= xlim[2]
-    if any(mask)
-        max_efdr = maximum(efdr_values[mask])
-        ylim_max = max(max_efdr * 1.1, xlim[2])  # Add 10% padding or at least match x-axis
-    else
-        ylim_max = xlim[2]
-    end
+    # Determine common axis limits to ensure square aspect ratio with same scale
+    max_data_value = max(maximum(efdr_values), xlim[2])
+    axis_limit = max_data_value * 1.1
     
-    # Plot styling from notebook with dynamic limits
+    # Plot styling from notebook with equal axis limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = xlim,
-        ylim = (0, ylim_max),
+        xlim = (0, axis_limit),
+        ylim = (0, axis_limit),
+        aspect_ratio = :equal,  # Force 1:1 aspect ratio
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -41,8 +37,8 @@ function plot_precursor_efdr_comparison(
         legendfontsize = 12
     )
     
-    # Diagonal reference line (exact style)
-    plot!(p, [0, xlim[2]], [0, xlim[2]], 
+    # Diagonal reference line (use full axis range)
+    plot!(p, [0, axis_limit], [0, axis_limit], 
           color = :black, 
           lw = 3, 
           label = nothing, 
@@ -58,85 +54,6 @@ function plot_precursor_efdr_comparison(
                   lw = 3,
                   label = nothing,  # No labels as per notebook
                   color = RGB(0.39215686, 0.58431373, 0.92941176),  # Exact color
-                  alpha = 0.75)
-        end
-    else
-        # Single run case
-        plot!(p,
-              fdr_values,
-              efdr_values,
-              lw = 3,
-              label = nothing,
-              color = RGB(0.39215686, 0.58431373, 0.92941176),
-              alpha = 0.75)
-    end
-    
-    savefig(p, output_path)
-    println("Plot saved to: $output_path")
-    
-    return p
-end
-
-"""
-    plot_protein_efdr_comparison(df::DataFrame; kwargs...)
-
-Create EFDR comparison plot for protein groups using exact notebook styling.
-Supports both combined and paired EFDR columns.
-"""
-function plot_protein_efdr_comparison(
-    df::DataFrame;
-    output_path::String = "protein_efdr_comparison.pdf",
-    fdr_col::Symbol = :Protein_Qvalue,
-    efdr_col::Symbol = :protein_group_entrapment_fdr,
-    combined_efdr_col::Union{Symbol, Nothing} = :combined_protein_fdr,
-    title::String = "Entrapment Analysis Protein Groups",
-    xlim::Tuple{Real, Real} = (0, 0.05)
-)
-    # Extract typed vectors
-    fdr_values = df[!, fdr_col]::AbstractVector{Float32}
-    efdr_values = df[!, efdr_col]::AbstractVector{Float32}
-    
-    # Determine y-axis range from data
-    mask = fdr_values .<= xlim[2]
-    if any(mask)
-        max_efdr = maximum(efdr_values[mask])
-        ylim_max = max(max_efdr * 1.1, xlim[2])  # Add 10% padding or at least match x-axis
-    else
-        ylim_max = xlim[2]
-    end
-    
-    # Plot styling with dynamic limits
-    p = plot(
-        size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = xlim,
-        ylim = (0, ylim_max),
-        xlabel = "FDR",
-        ylabel = "Entrapment FDR",
-        title = title
-    )
-    
-    # Note: titlefontsize and other font sizes are set after the diagonal line in notebook
-    plot!(p, [0, xlim[2]], [0, xlim[2]], 
-          color = :black, 
-          lw = 3, 
-          label = nothing, 
-          linestyle = :dash,
-          titlefontsize = 16,
-          xguidefontsize = 16,
-          yguidefontsize = 16,
-          tickfontsize = 12,
-          legendfontsize = 12)
-    
-    # Plot each run
-    if hasproperty(df, :file_name)
-        file_names = df.file_name::AbstractVector{String}
-        for (key, group) in pairs(groupby(DataFrame(fdr=fdr_values, efdr=efdr_values, file=file_names), :file))
-            plot!(p,
-                  group.fdr,
-                  group.efdr,
-                  lw = 3,
-                  label = nothing,
-                  color = RGB(0.39215686, 0.58431373, 0.92941176),
                   alpha = 0.75)
         end
     else
@@ -226,20 +143,16 @@ function plot_combined_efdr(
     fdr_values = df[!, fdr_col]::AbstractVector{Float32}
     efdr_values = df[!, efdr_col]::AbstractVector{Float32}
     
-    # Determine y-axis range from data
-    mask = fdr_values .<= xlim[2]
-    if any(mask)
-        max_efdr = maximum(efdr_values[mask])
-        ylim_max = max(max_efdr * 1.1, xlim[2])
-    else
-        ylim_max = xlim[2]
-    end
+    # Determine common axis limits to ensure square aspect ratio with same scale
+    max_data_value = max(maximum(efdr_values), xlim[2])
+    axis_limit = max_data_value * 1.1
     
-    # Create plot with notebook styling
+    # Create plot with notebook styling and equal axis limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = xlim,
-        ylim = (0, ylim_max),
+        xlim = (0, axis_limit),
+        ylim = (0, axis_limit),
+        aspect_ratio = :equal,  # Force 1:1 aspect ratio
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -250,8 +163,8 @@ function plot_combined_efdr(
         legendfontsize = 12
     )
     
-    # Diagonal reference line
-    plot!(p, [0, xlim[2]], [0, xlim[2]], 
+    # Diagonal reference line (use full axis range)
+    plot!(p, [0, axis_limit], [0, axis_limit], 
           color = :black, 
           lw = 3, 
           label = nothing, 
@@ -311,20 +224,16 @@ function plot_paired_efdr(
     fdr_values = df[!, fdr_col]::AbstractVector{Float32}
     efdr_values = df[!, efdr_col]::AbstractVector{Float32}
     
-    # Determine y-axis range from data
-    mask = fdr_values .<= xlim[2]
-    if any(mask)
-        max_efdr = maximum(efdr_values[mask])
-        ylim_max = max(max_efdr * 1.1, xlim[2])
-    else
-        ylim_max = xlim[2]
-    end
+    # Determine common axis limits to ensure square aspect ratio with same scale
+    max_data_value = max(maximum(efdr_values), xlim[2])
+    axis_limit = max_data_value * 1.1
     
-    # Create plot with notebook styling
+    # Create plot with notebook styling and equal axis limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = xlim,
-        ylim = (0, ylim_max),
+        xlim = (0, axis_limit),
+        ylim = (0, axis_limit),
+        aspect_ratio = :equal,  # Force 1:1 aspect ratio
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -335,8 +244,8 @@ function plot_paired_efdr(
         legendfontsize = 12
     )
     
-    # Diagonal reference line
-    plot!(p, [0, xlim[2]], [0, xlim[2]], 
+    # Diagonal reference line (use full axis range)
+    plot!(p, [0, axis_limit], [0, axis_limit], 
           color = :black, 
           lw = 3, 
           label = nothing, 
@@ -399,20 +308,23 @@ function plot_efdr_comparison_both_methods(
     combined_efdr = df[!, combined_efdr_col]::AbstractVector{Float32}
     paired_efdr = df[!, paired_efdr_col]::AbstractVector{Float32}
     
-    # Determine y-axis range from data
-    mask = fdr_values .<= xlim[2]
-    if any(mask)
-        max_efdr = max(maximum(combined_efdr[mask]), maximum(paired_efdr[mask]))
-        ylim_max = max(max_efdr * 1.1, xlim[2])
-    else
-        ylim_max = xlim[2]
-    end
+    # Determine common axis limits to ensure square aspect ratio with same scale
+    # Find the maximum value across all data
+    max_data_value = max(
+        maximum(combined_efdr),
+        maximum(paired_efdr),
+        xlim[2]  # Also consider the requested xlim
+    )
     
-    # Create plot with notebook styling
+    # Use the same limit for both axes, with 10% padding
+    axis_limit = max_data_value * 1.1
+    
+    # Create plot with notebook styling and equal axis limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
-        xlim = xlim,
-        ylim = (0, ylim_max),
+        xlim = (0, axis_limit),
+        ylim = (0, axis_limit),
+        aspect_ratio = :equal,  # Force 1:1 aspect ratio
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -424,8 +336,8 @@ function plot_efdr_comparison_both_methods(
         legend = :bottomright
     )
     
-    # Diagonal reference line
-    plot!(p, [0, xlim[2]], [0, xlim[2]], 
+    # Diagonal reference line (use full axis range)
+    plot!(p, [0, axis_limit], [0, axis_limit], 
           color = :black, 
           lw = 3, 
           label = "y = x", 

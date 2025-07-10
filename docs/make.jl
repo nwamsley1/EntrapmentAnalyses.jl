@@ -16,7 +16,6 @@ makedocs(;
         "Home" => "index.md",
         "User Guide" => [
             "Getting Started" => "guide.md",
-            "Tutorial" => "tutorial.md",
         ],
         "API Reference" => "api.md",
     ],

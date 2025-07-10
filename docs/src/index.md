@@ -38,7 +38,7 @@ results = run_efdr_analysis(
 ## Documentation Contents
 
 ```@contents
-Pages = ["guide.md", "tutorial.md", "api.md"]
+Pages = ["guide.md", "api.md"]
 Depth = 2
 ```
 
