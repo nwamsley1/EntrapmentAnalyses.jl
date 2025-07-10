@@ -1,6 +1,30 @@
 # Visualization functions with notebook styling
 
 """
+    format_axis_ticks(limit::Real, n_ticks::Int=5)
+
+Generate nice tick positions and labels for axes.
+"""
+function format_axis_ticks(limit::Real, n_ticks::Int=5)
+    # Generate evenly spaced ticks from 0 to limit
+    tick_positions = range(0, limit, length=n_ticks)
+    
+    # Format labels based on the scale
+    if limit > 1
+        # Use decimal notation with 1 decimal place
+        tick_labels = [Printf.@sprintf("%.1f", x) for x in tick_positions]
+    elseif limit > 0.1
+        # Use decimal notation with 2 decimal places
+        tick_labels = [Printf.@sprintf("%.2f", x) for x in tick_positions]
+    else
+        # Use decimal notation with 3 decimal places for small numbers
+        tick_labels = [Printf.@sprintf("%.3f", x) for x in tick_positions]
+    end
+    
+    return tick_positions, tick_labels
+end
+
+"""
     plot_precursor_efdr_comparison(df::DataFrame; kwargs...)
 
 Create EFDR comparison plot for precursors using exact notebook styling.
@@ -21,12 +45,17 @@ function plot_precursor_efdr_comparison(
     max_data_value = max(maximum(efdr_values), xlim[2])
     axis_limit = max_data_value * 1.1
     
+    # Generate custom ticks for better readability
+    tick_positions, tick_labels = format_axis_ticks(axis_limit, 5)
+    
     # Plot styling from notebook with equal axis limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
         xlim = (0, axis_limit),
         ylim = (0, axis_limit),
         aspect_ratio = :equal,  # Force 1:1 aspect ratio
+        xticks = (tick_positions, tick_labels),
+        yticks = (tick_positions, tick_labels),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -147,12 +176,17 @@ function plot_combined_efdr(
     max_data_value = max(maximum(efdr_values), xlim[2])
     axis_limit = max_data_value * 1.1
     
+    # Generate custom ticks for better readability
+    tick_positions, tick_labels = format_axis_ticks(axis_limit, 5)
+    
     # Create plot with notebook styling and equal axis limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
         xlim = (0, axis_limit),
         ylim = (0, axis_limit),
         aspect_ratio = :equal,  # Force 1:1 aspect ratio
+        xticks = (tick_positions, tick_labels),
+        yticks = (tick_positions, tick_labels),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -228,12 +262,17 @@ function plot_paired_efdr(
     max_data_value = max(maximum(efdr_values), xlim[2])
     axis_limit = max_data_value * 1.1
     
+    # Generate custom ticks for better readability
+    tick_positions, tick_labels = format_axis_ticks(axis_limit, 5)
+    
     # Create plot with notebook styling and equal axis limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
         xlim = (0, axis_limit),
         ylim = (0, axis_limit),
         aspect_ratio = :equal,  # Force 1:1 aspect ratio
+        xticks = (tick_positions, tick_labels),
+        yticks = (tick_positions, tick_labels),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
@@ -319,12 +358,17 @@ function plot_efdr_comparison_both_methods(
     # Use the same limit for both axes, with 10% padding
     axis_limit = max_data_value * 1.1
     
+    # Generate custom ticks for better readability
+    tick_positions, tick_labels = format_axis_ticks(axis_limit, 5)
+    
     # Create plot with notebook styling and equal axis limits
     p = plot(
         size = (400*1.5, 300*1.5),  # 600x450 pixels
         xlim = (0, axis_limit),
         ylim = (0, axis_limit),
         aspect_ratio = :equal,  # Force 1:1 aspect ratio
+        xticks = (tick_positions, tick_labels),
+        yticks = (tick_positions, tick_labels),
         xlabel = "FDR",
         ylabel = "Entrapment FDR",
         title = title,
