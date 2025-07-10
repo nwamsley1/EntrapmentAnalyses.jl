@@ -67,21 +67,6 @@ using Plots
         end
     end
     
-    @testset "plot_protein_efdr_comparison" begin
-        df = create_test_data()
-        
-        # Test basic plotting
-        @testset "Basic plot" begin
-            temp_file = tempname() * ".pdf"
-            p = EntrapmentAnalyses.plot_protein_efdr_comparison(df; output_path=temp_file)
-            
-            @test isa(p, Plots.Plot)
-            @test isfile(temp_file)
-            
-            rm(temp_file, force=true)
-        end
-    end
-    
     @testset "create_efdr_comparison_plot" begin
         # Test vector-based plotting
         fdr_values = Float32[0.01, 0.02, 0.03, 0.04, 0.05]

@@ -2,7 +2,6 @@
 
 [![Build Status](https://github.com/nwamsley1/EntrapmentAnalyses.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/nwamsley1/EntrapmentAnalyses.jl/actions/workflows/CI.yml?query=branch%3Amaster)
 [![codecov](https://codecov.io/gh/nwamsley1/EntrapmentAnalyses.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/nwamsley1/EntrapmentAnalyses.jl)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://nwamsley1.github.io/EntrapmentAnalyses.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://nwamsley1.github.io/EntrapmentAnalyses.jl/dev)
 
 EntrapmentAnalyses.jl is a Julia package that implementsw that combined and paired empirical FDR (EFDR) methods from [Wen et al. 2025](https://pubmed.ncbi.nlm.nih.gov/40524023/)
