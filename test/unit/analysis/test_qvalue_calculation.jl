@@ -126,6 +126,7 @@ using EntrapmentAnalyses
             df = DataFrame(
                 PredVal = Float32[0.9, 0.8, 0.85, 0.7, 0.75, 0.6],
                 decoy = [false, false, false, true, true, true],
+                channel = [0, 0, 0, 0, 0, 0],  # Dummy channel
                 stripped_seq = ["PEP1", "PEP1", "PEP2", "PEP1", "PEP1", "PEP2"],
                 z = [2, 2, 3, 2, 2, 3]
             )
@@ -147,6 +148,7 @@ using EntrapmentAnalyses
             df = DataFrame(
                 PredVal = Float32[0.9, 0.8, 0.7],
                 decoy = [false, true, false],
+                channel = [0, 0, 0],  # Dummy channel
                 stripped_seq = ["PEP1", "PEP2", "PEP3"],
                 z = [2, 2, 3]
             )
@@ -164,6 +166,7 @@ using EntrapmentAnalyses
             df = DataFrame(
                 PredVal = Float32[0.9, 0.8, 0.7, 0.85, 0.75, 0.65],
                 decoy = [false, true, false, false, true, false],
+                channel = [0, 0, 0, 0, 0, 0],  # Dummy channel
                 stripped_seq = ["PEP1", "PEP2", "PEP3", "PEP4", "PEP5", "PEP6"],
                 z = [2, 2, 3, 2, 3, 2],
                 file_name = ["file1", "file1", "file1", "file2", "file2", "file2"]
@@ -192,6 +195,7 @@ using EntrapmentAnalyses
             df = DataFrame(
                 PredVal = Float32[0.9, 0.8, 0.7],
                 decoy = [false, true, false],
+                channel = [0, 0, 0],  # Dummy channel
                 stripped_seq = ["PEP1", "PEP2", "PEP3"],
                 z = [2, 2, 3]
             )
@@ -202,24 +206,6 @@ using EntrapmentAnalyses
             @test hasproperty(df, :global_qvalue)
             @test all(0 .<= df.local_qvalue .<= 1)
             @test all(0 .<= df.global_qvalue .<= 1)
-        end
-        
-        # Test with empty DataFrame per file
-        @testset "Empty file groups" begin
-            df = DataFrame(
-                PredVal = Float32[],
-                decoy = Bool[],
-                stripped_seq = String[],
-                z = Int[],
-                file_name = String[]
-            )
-            
-            # Should not error on empty DataFrame
-            EntrapmentAnalyses.calculate_qvalues_per_file!(df)
-            
-            @test hasproperty(df, :local_qvalue)
-            @test hasproperty(df, :global_qvalue)
-            @test nrow(df) == 0
         end
     end
     

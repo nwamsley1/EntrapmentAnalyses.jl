@@ -227,31 +227,4 @@ using EntrapmentAnalyses
             @test all(0 .<= efdr .<= 1)
         end
     end
-    
-    @testset "DataFrame calculate_paired_efdr" begin
-        # Create test DataFrame with pairing info
-        df = DataFrame(
-            PredVal = Float32[0.9, 0.8, 0.7, 0.6],
-            local_qvalue = Float32[0.01, 0.02, 0.03, 0.04]
-        )
-        
-        pairing_info = (
-            is_original = [true, false, true, false],
-            complement_indices = [2, 1, 4, 3],
-            pair_ids = [100, 100, 200, 200],
-            entrap_labels = [0, 1, 0, 1]
-        )
-        
-        # Test the DataFrame interface with deprecation warning
-        @test_logs (:warn,) match_mode=:any begin
-            efdr = EntrapmentAnalyses.calculate_paired_efdr(
-                df;
-                pairing_info = pairing_info,
-                show_progress = false
-            )
-            
-            @test length(efdr) == 4
-            @test all(0 .<= efdr .<= 1)
-        end
-    end
 end

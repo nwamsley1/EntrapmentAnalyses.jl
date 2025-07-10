@@ -5,16 +5,8 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://nwamsley1.github.io/EntrapmentAnalyses.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://nwamsley1.github.io/EntrapmentAnalyses.jl/dev)
 
-A Julia package for calculating entrapment-based false discovery rate (FDR) in proteomics data. Implements both combined and paired empirical FDR methods for precursor-level and protein-level analyses. 
+EntrapmentAnalyses.jl is a Julia package that implementsw that combined and paired empirical FDR (EFDR) methods from [Wen et al. 2025](https://pubmed.ncbi.nlm.nih.gov/40524023/)
 
-## Features
-
-- **Dual EFDR Methods**: Implements both combined and paired empirical FDR calculations
-- **Multi-level Analysis**: Supports both precursor-level and protein-level analyses
-- **Plex-Aware Pairing**: Handles multiplexed data with plex-specific complement scoring
-- **Per-File Processing**: Calculates q-values separately for each input file
-- **Comprehensive Visualization**: Generates publication-ready plots with exact notebook styling
-- **Detailed Reporting**: Creates markdown reports with analysis summaries and embedded plots
 
 ## Installation
 Navigate to the EntrapmentAnalyses directory. Use `]` to enter Pkg mode. 
@@ -33,26 +25,18 @@ Precompiling EntrapmentAnalyses...
 ```julia
 using EntrapmentAnalyses
 
-# Single file analysis
-parquet_file = "path/to/psm_results.parquet"
-library_file = "path/to/spectral_library.tsv"
-
-# Run precursor-level EFDR analysis (calculates both combined and paired EFDR)
-results = run_efdr_analysis(parquet_file, library_file; output_dir="efdr_output")
-
-# Run protein-level EFDR analysis
-protein_results = run_protein_efdr_analysis(parquet_file, library_file; output_dir="protein_output")
-
-# Multiple file analysis
-parquet_files = ["file1.parquet", "file2.parquet", "file3.parquet"]
-results = run_efdr_analysis(parquet_files, library_file; output_dir="multi_file_output")
+# Run precursor-level EFDR analysis
+results = run_efdr_analysis(
+    ["data/psm_results.parquet"],
+    "data/spectral_library.tsv";
+    output_dir="output"
+)
 ```
 
 ## Key Functions
 
 ### Main Analysis Functions
 - `run_efdr_analysis(parquet_files, library_path; kwargs...)` - Precursor-level EFDR analysis
-- `run_protein_efdr_analysis(parquet_files, library_path; kwargs...)` - Protein-level rollup and analysis
 
 ### Data Loading
 - `load_parquet_results(filepaths)` - Load and combine PSM results from Parquet files
@@ -73,7 +57,6 @@ Required columns:
 - `PredVal`: Prediction score (higher is better)
 - `decoy`: Boolean indicating decoy status
 - `file_name`: Source file identifier
-- `protein`: Protein identifiers
 - `channel`: Multiplex channel (optional, will add dummy if missing)
 
 ### Spectral Library (TSV)
@@ -97,7 +80,7 @@ Each analysis run generates:
 - `pair_id`: Links original/entrapment pairs
 - `complement_score`: Plex-specific score of paired peptide
 - `combined_entrapment_fdr`: Combined EFDR values
-- `precursor_entrapment_fdr` or `protein_group_entrapment_fdr`: Paired EFDR values
+- `precursor_entrapment_fdr`: Paired EFDR values
 
 ## Advanced Usage
 
@@ -136,7 +119,6 @@ The package includes a comprehensive test suite covering all major functionality
 # - Plex-aware pairing system
 # - Combined and paired EFDR calculations
 # - Q-value calculations (per-file and global)
-# - Protein rollup and analysis
 # - Monotonization functions
 # - Visualization functions
 ```

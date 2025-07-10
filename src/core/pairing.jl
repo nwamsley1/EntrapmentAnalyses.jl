@@ -36,35 +36,6 @@ Base.:(==)(a::PeptideKey, b::PeptideKey) = a.mod_seq == b.mod_seq && a.z == b.z
 Base.hash(k::PlexPairKey, h::UInt) = hash((k.plex, k.pair_id), h)
 Base.:(==)(a::PlexPairKey, b::PlexPairKey) = a.plex == b.plex && a.pair_id == b.pair_id
 
-"""
-    get_complement_scores(scores::AbstractVector{T}, complement_indices::AbstractVector{Int}) where T
-
-[DEPRECATED] Extract complement scores based on complement indices.
-Returns -1.0 for entries with no complement (complement_indices[i] == -1).
-
-This function is deprecated. Use compute_pairing_vectors which now returns
-plex-specific complement_scores in the result tuple.
-"""
-function get_complement_scores(scores::AbstractVector{T}, complement_indices::AbstractVector{Int}) where T<:Real
-    @warn "get_complement_scores is deprecated. Use compute_pairing_vectors which returns plex-specific complement_scores." maxlog=1
-    
-    n = length(scores)
-    if length(complement_indices) != n
-        error("Scores and complement_indices must have the same length")
-    end
-    
-    complement_scores = Vector{T}(undef, n)
-    
-    for i in 1:n
-        if complement_indices[i] > 0 && complement_indices[i] <= n
-            complement_scores[i] = scores[complement_indices[i]]
-        else
-            complement_scores[i] = T(-1)  # No complement
-        end
-    end
-    
-    return complement_scores
-end
 
 # New functions for plex-specific pairing
 
@@ -111,6 +82,7 @@ function init_entrapment_pairs_dict(
     
     return pair_dict, is_original_dict
 end
+
 
 """
     add_plex_complement_scores!(results_df::DataFrame, pair_dict, is_original_dict; kwargs...)
@@ -313,3 +285,4 @@ function compute_pairing_vectors!(
     
     return results_df
 end
+

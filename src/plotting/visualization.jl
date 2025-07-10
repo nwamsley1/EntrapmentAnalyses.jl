@@ -9,7 +9,7 @@ function plot_precursor_efdr_comparison(
     df::DataFrame;
     output_path::String = "precursor_efdr_comparison.pdf",
     fdr_col::Symbol = :local_qvalue,
-    efdr_col::Symbol = :precursor_entrapment_fdr,
+    efdr_col::Symbol = :paired_entrapment_fdr,
     title::String = "Entrapment Analysis Precursors",
     xlim::Tuple{Real, Real} = (0, 0.05)
 )

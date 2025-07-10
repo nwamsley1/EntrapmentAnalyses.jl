@@ -200,23 +200,4 @@ using EntrapmentAnalyses
             show_progress = false
         )
     end
-    
-    @testset "get_complement_scores (deprecated)" begin
-        scores = Float32[0.9, 0.8, 0.7, 0.6]
-        complement_indices = [2, 1, 4, 3]
-        
-        # Test deprecated function still works
-        @test_logs (:warn,) match_mode=:any begin
-            comp_scores = EntrapmentAnalyses.get_complement_scores(scores, complement_indices)
-            @test comp_scores ≈ Float32[0.8, 0.9, 0.6, 0.7]
-        end
-        
-        # Test with invalid indices
-        complement_indices_invalid = [2, -1, 5, 3]  # -1 and 5 are invalid
-        @test_logs (:warn,) match_mode=:any begin
-            comp_scores = EntrapmentAnalyses.get_complement_scores(scores, complement_indices_invalid)
-            @test comp_scores[2] == -1.0f0  # No complement
-            @test comp_scores[3] == -1.0f0  # Out of bounds
-        end
-    end
 end

@@ -157,12 +157,12 @@ function calculate_global_qvalues!(
     println("Calculating global q-values...")
     
     # Group by precursor
-    gdf = groupby(df, [:decoy, :stripped_seq, :z])
+    gdf = groupby(df, [:decoy, :channel, :z, :stripped_seq])
     
     # Get best scoring per group
     global_summary = combine(gdf) do group
         idx = argmax(group[:, score_col])
-        return group[idx:idx, [:decoy, :stripped_seq, :z, score_col]]
+        return group[idx:idx, [:decoy, :channel, :z, :stripped_seq, score_col]]
     end
     
     # Sort for q-value calculation
@@ -183,11 +183,11 @@ function calculate_global_qvalues!(
     
     # Map back to original dataframe
     qval_dict = Dict(
-        (row.decoy, row.stripped_seq, row.z) => row.global_qvalue
+        (row.decoy, row.channel, row.z, row.stripped_seq) => row.global_qvalue
         for row in eachrow(global_summary)
     )
     
-    df[!, :global_qvalue] = [qval_dict[(row.decoy, row.stripped_seq, row.z)] 
+    df[!, :global_qvalue] = [qval_dict[(row.decoy, row.channel, row.z, row.stripped_seq)] 
                               for row in eachrow(df)]
     
     # Print summary
@@ -214,12 +214,12 @@ function calculate_qvalues_per_file!(
     score_col::Symbol = :PredVal,
     file_col::Symbol = :file_name
 )
-    println("Calculating q-values per file...")
-    
     # Initialize columns
     df[!, :local_qvalue] = zeros(Float32, nrow(df))
     df[!, :global_qvalue] = zeros(Float32, nrow(df))
-    
+    # Calculate global q-values for this file
+    calculate_global_qvalues!(df; score_col=score_col)
+
     # Group by file
     if hasproperty(df, file_col)
         gdf = groupby(df, file_col)
@@ -233,9 +233,6 @@ function calculate_qvalues_per_file!(
             # Calculate local q-values for this file
             calculate_qvalues!(file_df; score_col=score_col, sort_df=true)
             
-            # Calculate global q-values for this file
-            calculate_global_qvalues!(file_df; score_col=score_col)
-            
             # Print file summary
             n_psms = nrow(file_df)
             n_decoys = sum(file_df.decoy)
@@ -246,7 +243,6 @@ function calculate_qvalues_per_file!(
         # Single file case
         @info "No file column found, treating as single file..."
         calculate_qvalues!(df; score_col=score_col, sort_df=true)
-        calculate_global_qvalues!(df; score_col=score_col)
     end
     
     return nothing
