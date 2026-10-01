@@ -1,8 +1,8 @@
 name = "EntrapmentAnalyses"
 uuid = "60062a3e-e55a-4920-8913-bf16cdadf465"
 license = "MIT"
-authors = ["Nathan Wamsley <wamsleynathan@gmail.com>"]
 version = "0.1.0"
+authors = ["Nathan Wamsley <wamsleynathan@gmail.com>"]
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -24,6 +24,7 @@ Parquet2 = "0.2"
 Plots = "1.40"
 ProgressBars = "1.5"
 Revise = "3.8.0"
+Statistics = "1"
 julia = "1.9"
 
 [extras]
